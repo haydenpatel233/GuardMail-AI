@@ -1,0 +1,30 @@
+# Security: Never leak private environment keys
+.env
+
+# Python: Ignore compiled bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environments: Ignore local virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Operating System clutter files
+.DS_Store
+Thumbs.db
+
+# Vercel: Ignore local development build logs
+.vercel/logs/
+
+# Large datasets — exceed GitHub's 100 MB limit
+datasets/phishing_email.csv
+datasets/spam_Emails_data.csv
+datasets/malicious_phish.csv
+
+# Screenshots
+*.png
+

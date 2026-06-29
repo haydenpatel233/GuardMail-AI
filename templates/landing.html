@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GuardMail AI — Intelligent Email Threat Detection</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    * { font-family: 'Inter', sans-serif; }
+
+    body { background: #020617; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 3px; }
+
+    /* Gradient text */
+    .gradient-text {
+      background: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .gradient-text-danger {
+      background: linear-gradient(135deg, #f43f5e 0%, #fb923c 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Animated gradient border */
+    .gradient-border {
+      position: relative;
+      background: linear-gradient(#0f172a, #0f172a) padding-box,
+                  linear-gradient(135deg, #4f46e5, #7c3aed, #4f46e5) border-box;
+      border: 1px solid transparent;
+    }
+
+    /* Glass morphism */
+    .glass {
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    /* Glow effects */
+    .glow-indigo { box-shadow: 0 0 40px rgba(79, 70, 229, 0.3); }
+    .glow-rose   { box-shadow: 0 0 40px rgba(244, 63, 94, 0.3); }
+    .glow-purple { box-shadow: 0 0 40px rgba(168, 85, 247, 0.3); }
+
+    /* Animated orbs in hero */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      animation: float 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: rgba(79, 70, 229, 0.15);
+      top: -150px; left: -100px;
+      animation-delay: 0s;
+    }
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: rgba(168, 85, 247, 0.12);
+      top: 100px; right: -80px;
+      animation-delay: 3s;
+    }
+    .orb-3 {
+      width: 300px; height: 300px;
+      background: rgba(244, 63, 94, 0.08);
+      bottom: 0; left: 40%;
+      animation-delay: 6s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50%       { transform: translateY(-30px) scale(1.05); }
+    }
+
+    /* Pulse ring */
+    .pulse-ring {
+      animation: pulse-ring 2.5s ease-out infinite;
+    }
+    @keyframes pulse-ring {
+      0%   { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.6); }
+      70%  { transform: scale(1);    box-shadow: 0 0 0 20px rgba(79, 70, 229, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+    }
+
+    /* Fade in on scroll */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Stagger delays */
+    .delay-1 { transition-delay: 0.1s; }
+    .delay-2 { transition-delay: 0.2s; }
+    .delay-3 { transition-delay: 0.3s; }
+    .delay-4 { transition-delay: 0.4s; }
+    .delay-5 { transition-delay: 0.5s; }
+    .delay-6 { transition-delay: 0.6s; }
+
+    /* Feature card hover */
+    .feature-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+    }
+
+    /* Navbar scroll effect */
+    .nav-scrolled {
+      background: rgba(2, 6, 23, 0.95) !important;
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(79, 70, 229, 0.2);
+    }
+
+    /* Step connector line */
+    .step-line::after {
+      content: '';
+      position: absolute;
+      top: 28px;
+      left: calc(100% + 1px);
+      width: calc(100% - 2px);
+      height: 2px;
+      background: linear-gradient(90deg, #4f46e5, #7c3aed);
+      opacity: 0.4;
+    }
+
+    /* Stat card */
+    .stat-number {
+      font-size: 3rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    /* Email mockup */
+    .email-row {
+      animation: slideIn 0.5s ease forwards;
+      opacity: 0;
+    }
+    .email-row:nth-child(1) { animation-delay: 0.4s; }
+    .email-row:nth-child(2) { animation-delay: 0.7s; }
+    .email-row:nth-child(3) { animation-delay: 1.0s; }
+    .email-row:nth-child(4) { animation-delay: 1.3s; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Risk badge pulse */
+    .risk-critical { animation: riskPulse 2s ease-in-out infinite; }
+    @keyframes riskPulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.7; }
+    }
+
+    /* CTA button */
+    .btn-primary {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transition: left 0.5s ease;
+    }
+    .btn-primary:hover::after { left: 100%; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79, 70, 229, 0.5); }
+
+    /* Shield icon */
+    .shield-bg {
+      background: linear-gradient(135deg, #1e1b4b, #2d1b69);
+      border: 1px solid rgba(79, 70, 229, 0.3);
+    }
+
+    /* Threat type badge */
+    .badge-scam    { background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .badge-spam    { background: rgba(251, 146, 60, 0.15); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.3); }
+    .badge-safe    { background: rgba(34, 197, 94, 0.15);  color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .badge-priority { background: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
+
+    /* Grid pattern background */
+    .grid-pattern {
+      background-image:
+        linear-gradient(rgba(79, 70, 229, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79, 70, 229, 0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* Ticker */
+    .threat-ticker {
+      animation: ticker 25s linear infinite;
+    }
+    @keyframes ticker {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+  </style>
+</head>
+<body class="text-white overflow-x-hidden">
+
+  <!-- ===================== NAVBAR ===================== -->
+  <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-4">
+    <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-3">
+        <div class="w-9 h-9 shield-bg rounded-lg flex items-center justify-center glow-indigo">
+          <i class="fa-solid fa-shield-halved text-indigo-400 text-sm"></i>
+        </div>
+        <span class="text-xl font-bold">
+          Guard<span class="gradient-text">Mail</span> <span class="text-slate-400 font-normal text-sm">AI</span>
+        </span>
+      </a>
+
+      <!-- Nav Links -->
+      <div class="hidden md:flex items-center gap-8 text-sm text-slate-400">
+        <a href="#features" class="hover:text-white transition-colors">Features</a>
+        <a href="#how-it-works" class="hover:text-white transition-colors">How It Works</a>
+        <a href="#extension" class="hover:text-white transition-colors">Extension</a>
+        <a href="#stats" class="hover:text-white transition-colors">Stats</a>
+      </div>
+
+      <!-- CTA -->
+      <a href="/login" class="btn-primary px-5 py-2.5 rounded-lg text-sm font-semibold text-white hidden md:flex items-center gap-2">
+        <i class="fa-brands fa-google text-xs"></i>
+        Get Started Free
+      </a>
+
+      <!-- Mobile menu button -->
+      <button class="md:hidden text-slate-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+        <i class="fa-solid fa-bars text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="hidden md:hidden mt-4 mx-6 glass rounded-xl border border-slate-800 p-4">
+      <div class="flex flex-col gap-4 text-sm text-slate-300">
+        <a href="#features" class="hover:text-white">Features</a>
+        <a href="#how-it-works" class="hover:text-white">How It Works</a>
+        <a href="#extension" class="hover:text-white">Extension</a>
+        <a href="/login" class="btn-primary text-center py-2.5 rounded-lg font-semibold text-white">
+          Get Started Free
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===================== THREAT TICKER ===================== -->
+  <div class="fixed top-0 left-0 right-0 z-40 bg-rose-950/50 border-b border-rose-900/50 py-1.5 overflow-hidden">
+    <div class="flex gap-0">
+      <div class="threat-ticker flex gap-8 whitespace-nowrap text-xs text-rose-400">
+        <span><i class="fa-solid fa-triangle-exclamation mr-1"></i> LIVE THREAT FEED</span>
+        <span>•</span>
+        <span>Phishing attempt detected — PayPal spoofing blocked</span>
+        <span>•</span>
+        <span>Brand impersonation: Google LLC → flagged</span>
+        <span>•</span>
+        <span>Malicious link intercepted in suspicious email</span>
+        <span>•</span>
+        <span>SOC escalation triggered — scam alert neutralized</span>
+        <span>•</span>
+        <span>Netflix credential harvesting attempt blocked</span>
+        <span>•</span>
+        <span>Amazon phishing email → Risk Score: 92/100</span>
+        <span>•</span>
+        <!-- Duplicate for seamless loop -->
+        <span><i class="fa-solid fa-triangle-exclamation mr-1"></i> LIVE THREAT FEED</span>
+        <span>•</span>
+        <span>Phishing attempt detected — PayPal spoofing blocked</span>
+        <span>•</span>
+        <span>Brand impersonation: Google LLC → flagged</span>
+        <span>•</span>
+        <span>Malicious link intercepted in suspicious email</span>
+        <span>•</span>
+        <span>SOC escalation triggered — scam alert neutralized</span>
+        <span>•</span>
+        <span>Netflix credential harvesting attempt blocked</span>
+        <span>•</span>
+        <span>Amazon phishing email → Risk Score: 92/100</span>
+        <span>•</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== HERO ===================== -->
+  <section class="relative min-h-screen flex items-center justify-center grid-pattern overflow-hidden pt-24">
+    <!-- Orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="max-w-7xl mx-auto px-6 w-full py-20 grid lg:grid-cols-2 gap-16 items-center">
+      <!-- Left: Text -->
+      <div>
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 bg-indigo-950/60 border border-indigo-700/40 rounded-full px-4 py-1.5 text-xs text-indigo-300 mb-6">
+          <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse"></span>
+          AI-Powered Email Security Platform
+        </div>
+
+        <h1 class="text-5xl lg:text-6xl xl:text-7xl font-black leading-tight mb-6">
+          Stop Phishing
+          <span class="block gradient-text">Before It Stops</span>
+          <span class="block">You.</span>
+        </h1>
+
+        <p class="text-lg text-slate-400 leading-relaxed mb-8 max-w-lg">
+          GuardMail AI uses advanced AI and real-time threat analysis to detect phishing, scams, and brand spoofing in your inbox — then teaches you how to spot them yourself.
+        </p>
+
+        <!-- Features pills -->
+        <div class="flex flex-wrap gap-2 mb-10">
+          <span class="flex items-center gap-1.5 text-xs bg-slate-800/80 border border-slate-700/50 rounded-full px-3 py-1.5 text-slate-300">
+            <i class="fa-solid fa-brain text-indigo-400"></i> Groq AI Analysis
+          </span>
+          <span class="flex items-center gap-1.5 text-xs bg-slate-800/80 border border-slate-700/50 rounded-full px-3 py-1.5 text-slate-300">
+            <i class="fa-brands fa-google text-blue-400"></i> Gmail Integration
+          </span>
+          <span class="flex items-center gap-1.5 text-xs bg-slate-800/80 border border-slate-700/50 rounded-full px-3 py-1.5 text-slate-300">
+            <i class="fa-solid fa-puzzle-piece text-purple-400"></i> Browser Extension
+          </span>
+          <span class="flex items-center gap-1.5 text-xs bg-slate-800/80 border border-slate-700/50 rounded-full px-3 py-1.5 text-slate-300">
+            <i class="fa-solid fa-building-shield text-emerald-400"></i> SOC Integration
+          </span>
+        </div>
+
+        <!-- CTAs -->
+        <div class="flex flex-col sm:flex-row gap-4">
+          <a href="/login" class="btn-primary flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-base">
+            <i class="fa-brands fa-google"></i>
+            Sign in with Google
+          </a>
+          <a href="#how-it-works" class="flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-semibold text-base border border-slate-700 text-slate-300 hover:border-indigo-600 hover:text-white transition-all duration-300">
+            <i class="fa-solid fa-play text-xs"></i>
+            See How It Works
+          </a>
+        </div>
+
+        <p class="text-xs text-slate-600 mt-4">
+          <i class="fa-solid fa-lock mr-1"></i>Gmail.readonly scope only — we never modify your inbox
+        </p>
+      </div>
+
+      <!-- Right: App Mockup -->
+      <div class="relative hidden lg:block">
+        <!-- Glow backdrop -->
+        <div class="absolute inset-0 bg-indigo-600/10 rounded-3xl filter blur-3xl"></div>
+
+        <!-- Dashboard mockup -->
+        <div class="relative gradient-border rounded-2xl overflow-hidden shadow-2xl glow-indigo">
+          <!-- Mock header -->
+          <div class="bg-slate-900/90 px-5 py-3.5 flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <i class="fa-solid fa-shield-halved text-indigo-400 text-sm"></i>
+              <span class="text-sm font-semibold text-white">GuardMail AI</span>
+              <span class="text-xs bg-emerald-900/50 border border-emerald-700/40 text-emerald-400 px-2 py-0.5 rounded-full">
+                <span class="inline-block w-1.5 h-1.5 bg-emerald-400 rounded-full mr-1 animate-pulse"></span>Live
+              </span>
+            </div>
+            <div class="flex items-center gap-3 text-xs text-slate-500">
+              <span><i class="fa-brands fa-google mr-1"></i>Gmail Connected</span>
+            </div>
+          </div>
+
+          <!-- Mock metrics row -->
+          <div class="bg-slate-900/70 px-5 py-3 grid grid-cols-4 gap-3 border-b border-slate-800">
+            <div class="text-center">
+              <p class="text-lg font-bold text-white">247</p>
+              <p class="text-xs text-slate-500">Audited</p>
+            </div>
+            <div class="text-center">
+              <p class="text-lg font-bold text-rose-400">18</p>
+              <p class="text-xs text-slate-500">Spoofed</p>
+            </div>
+            <div class="text-center">
+              <p class="text-lg font-bold text-amber-400">7</p>
+              <p class="text-xs text-slate-500">SOC Cases</p>
+            </div>
+            <div class="text-center">
+              <p class="text-lg font-bold text-purple-400">12%</p>
+              <p class="text-xs text-slate-500">Risk Rate</p>
+            </div>
+          </div>
+
+          <!-- Mock email list -->
+          <div class="bg-slate-950/80 p-4 space-y-2.5">
+            <div class="email-row flex items-center gap-3 bg-rose-950/30 border border-rose-800/40 rounded-lg p-3">
+              <div class="w-8 h-8 rounded-full bg-rose-900/60 flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-skull-crossbones text-rose-400 text-xs"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-semibold text-white truncate">security@paypa1.com</p>
+                <p class="text-xs text-slate-500 truncate">Urgent: Verify your account now</p>
+              </div>
+              <div class="flex-shrink-0 text-right">
+                <span class="badge-scam text-xs px-2 py-0.5 rounded-full font-medium risk-critical">SCAM</span>
+                <p class="text-xs text-rose-400 font-bold mt-0.5">87/100</p>
+              </div>
+            </div>
+
+            <div class="email-row flex items-center gap-3 bg-amber-950/20 border border-amber-800/30 rounded-lg p-3">
+              <div class="w-8 h-8 rounded-full bg-amber-900/40 flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-envelope text-amber-400 text-xs"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-semibold text-white truncate">offers@deals-promo.net</p>
+                <p class="text-xs text-slate-500 truncate">You've been selected! Claim prize</p>
+              </div>
+              <div class="flex-shrink-0 text-right">
+                <span class="badge-spam text-xs px-2 py-0.5 rounded-full font-medium">SPAM</span>
+                <p class="text-xs text-amber-400 font-bold mt-0.5">43/100</p>
+              </div>
+            </div>
+
+            <div class="email-row flex items-center gap-3 bg-slate-800/30 border border-slate-700/30 rounded-lg p-3">
+              <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-briefcase text-slate-400 text-xs"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-semibold text-white truncate">hr@company.com</p>
+                <p class="text-xs text-slate-500 truncate">Q3 Performance Review — Action</p>
+              </div>
+              <div class="flex-shrink-0 text-right">
+                <span class="badge-priority text-xs px-2 py-0.5 rounded-full font-medium">PRIORITY</span>
+                <p class="text-xs text-purple-400 font-bold mt-0.5">5/100</p>
+              </div>
+            </div>
+
+            <div class="email-row flex items-center gap-3 bg-emerald-950/20 border border-emerald-800/20 rounded-lg p-3">
+              <div class="w-8 h-8 rounded-full bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-check text-emerald-400 text-xs"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-semibold text-white truncate">noreply@github.com</p>
+                <p class="text-xs text-slate-500 truncate">Your pull request was merged</p>
+              </div>
+              <div class="flex-shrink-0 text-right">
+                <span class="badge-safe text-xs px-2 py-0.5 rounded-full font-medium">SAFE</span>
+                <p class="text-xs text-emerald-400 font-bold mt-0.5">2/100</p>
+              </div>
+            </div>
+
+            <!-- AI Analysis preview -->
+            <div class="mt-3 bg-indigo-950/40 border border-indigo-800/30 rounded-lg p-3">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fa-solid fa-brain text-indigo-400 text-xs"></i>
+                <span class="text-xs font-semibold text-indigo-300">AI Threat Analysis</span>
+                <span class="ml-auto text-xs text-slate-600">security@paypa1.com</span>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                <span class="text-rose-400 font-semibold">Brand Spoofing Detected.</span> Sender impersonates PayPal using typosquat domain "paypa1.com". Contains credential harvesting link with urgency trigger language. Risk: <span class="text-rose-400 font-bold">CRITICAL</span>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <a href="#features" class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-slate-600 hover:text-slate-400 transition-colors">
+      <span class="text-xs">Scroll to explore</span>
+      <i class="fa-solid fa-chevron-down animate-bounce"></i>
+    </a>
+  </section>
+
+  <!-- ===================== TRUST BAR ===================== -->
+  <section class="bg-slate-900/50 border-y border-slate-800/50 py-5">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="flex flex-wrap items-center justify-center gap-6 md:gap-12">
+        <span class="text-xs text-slate-600 uppercase tracking-widest font-medium">Protecting against</span>
+        <div class="flex flex-wrap items-center justify-center gap-6 md:gap-10">
+          <span class="flex items-center gap-2 text-sm text-slate-400">
+            <i class="fa-solid fa-fish text-rose-500"></i> Phishing Attacks
+          </span>
+          <span class="flex items-center gap-2 text-sm text-slate-400">
+            <i class="fa-solid fa-user-secret text-amber-500"></i> Brand Spoofing
+          </span>
+          <span class="flex items-center gap-2 text-sm text-slate-400">
+            <i class="fa-solid fa-link-slash text-purple-500"></i> Malicious Links
+          </span>
+          <span class="flex items-center gap-2 text-sm text-slate-400">
+            <i class="fa-solid fa-envelope-circle-check text-indigo-400"></i> Credential Harvesting
+          </span>
+          <span class="flex items-center gap-2 text-sm text-slate-400">
+            <i class="fa-solid fa-spider text-red-400"></i> Social Engineering
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FEATURES ===================== -->
+  <section id="features" class="py-28 px-6 relative">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <div class="text-center mb-16 fade-up">
+        <span class="text-xs text-indigo-400 uppercase tracking-widest font-semibold">Capabilities</span>
+        <h2 class="text-4xl lg:text-5xl font-black mt-3 mb-5">
+          Everything You Need to
+          <span class="gradient-text block">Stay Secure</span>
+        </h2>
+        <p class="text-slate-400 max-w-xl mx-auto text-lg">
+          GuardMail AI combines real-time threat detection, AI-powered analysis, and interactive education in one platform.
+        </p>
+      </div>
+
+      <!-- Feature Grid -->
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- Feature 1 -->
+        <div class="feature-card fade-up delay-1 gradient-border rounded-2xl p-6 bg-slate-900/50">
+          <div class="w-12 h-12 bg-indigo-900/50 border border-indigo-700/40 rounded-xl flex items-center justify-center mb-5">
+            <i class="fa-solid fa-brain text-indigo-400 text-xl"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">AI Threat Classification</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            Powered by Groq's LLM, every email is classified into Scam Alert, Spam, Important, or Safe — with a full reasoning report explaining the threat indicators detected.
+          </p>
+          <div class="mt-4 flex gap-2 flex-wrap">
+            <span class="badge-scam text-xs px-2.5 py-1 rounded-full">Scam Alert</span>
+            <span class="badge-spam text-xs px-2.5 py-1 rounded-full">Spam</span>
+            <span class="badge-priority text-xs px-2.5 py-1 rounded-full">Important</span>
+            <span class="badge-safe text-xs px-2.5 py-1 rounded-full">Safe</span>
+          </div>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-card fade-up delay-2 gradient-border rounded-2xl p-6 bg-slate-900/50">
+          <div class="w-12 h-12 bg-rose-900/50 border border-rose-700/40 rounded-xl flex items-center justify-center mb-5">
+            <i class="fa-solid fa-chart-line text-rose-400 text-xl"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Dynamic Risk Scoring</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            Each email receives a 0–100 risk score combining threat category (+45 for scams), brand spoofing detection (+25), and dangerous link analysis (+15 per link).
+          </p>
+          <!-- Risk meter -->
+          <div class="mt-4">
+            <div class="flex justify-between text-xs text-slate-500 mb-1.5">
+              <span>0 — Safe</span>
+              <span class="text-rose-400 font-bold">87 — CRITICAL</span>
+            </div>
+            <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500" style="width: 87%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-card fade-up delay-3 gradient-border rounded-2xl p-6 bg-slate-900/50">
+          <div class="w-12 h-12 bg-amber-900/50 border border-amber-700/40 rounded-xl flex items-center justify-center mb-5">
+            <i class="fa-solid fa-user-secret text-amber-400 text-xl"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Brand Spoofing Detection</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            Automatically identifies when attackers impersonate trusted brands — PayPal, Google, Netflix, Amazon, Apple, Meta, and more — in sender display names.
+          </p>
+          <div class="mt-4 grid grid-cols-3 gap-2">
+            <span class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-2 text-center text-xs text-slate-400">PayPal</span>
+            <span class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-2 text-center text-xs text-slate-400">Google</span>
+            <span class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-2 text-center text-xs text-slate-400">Netflix</span>
+            <span class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-2 text-center text-xs text-slate-400">Amazon</span>
+            <span class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-2 text-center text-xs text-slate-400">Apple</span>
+            <span class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-2 text-center text-xs text-slate-400">Meta</span>
+          </div>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="feature-card fade-up delay-4 gradient-border rounded-2xl p-6 bg-slate-900/50">
+          <div class="w-12 h-12 bg-purple-900/50 border border-purple-700/40 rounded-xl flex items-center justify-center mb-5">
+            <i class="fa-solid fa-link text-purple-400 text-xl"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">URL Sandbox Analysis</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            Extracts and analyzes every hyperlink in suspicious emails, flagging malicious URLs before you click — with a dedicated sandbox panel for detailed inspection.
+          </p>
+          <div class="mt-4 space-y-1.5">
+            <div class="flex items-center gap-2 text-xs">
+              <i class="fa-solid fa-circle-xmark text-rose-400"></i>
+              <span class="text-slate-500 font-mono truncate">http://paypa1.com/verify</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <i class="fa-solid fa-circle-check text-emerald-400"></i>
+              <span class="text-slate-500 font-mono truncate">https://github.com/pulls</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="feature-card fade-up delay-5 gradient-border rounded-2xl p-6 bg-slate-900/50">
+          <div class="w-12 h-12 bg-emerald-900/50 border border-emerald-700/40 rounded-xl flex items-center justify-center mb-5">
+            <i class="fa-solid fa-graduation-cap text-emerald-400 text-xl"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Phishing Quiz Arena</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            Turns every threat into a teachable moment. AI generates interactive multiple-choice quizzes from real email content, building your threat detection skills over time.
+          </p>
+          <!-- Mock quiz -->
+          <div class="mt-4 bg-slate-800/60 rounded-lg p-3">
+            <p class="text-xs text-slate-300 mb-2 font-medium">What makes this email suspicious?</p>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-900/20 rounded px-2 py-1">
+                <i class="fa-solid fa-check-circle"></i> Typosquatted sender domain
+              </div>
+              <div class="flex items-center gap-2 text-xs text-slate-500 bg-slate-800/40 rounded px-2 py-1">
+                <i class="fa-regular fa-circle"></i> Formal language tone
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="feature-card fade-up delay-6 gradient-border rounded-2xl p-6 bg-slate-900/50">
+          <div class="w-12 h-12 bg-blue-900/50 border border-blue-700/40 rounded-xl flex items-center justify-center mb-5">
+            <i class="fa-solid fa-building-shield text-blue-400 text-xl"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Enterprise SOC Reporting</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            One-click escalation to your Security Operations Center. Report malicious emails for incident tracking and build an organizational threat intelligence database.
+          </p>
+          <div class="mt-4 flex items-center gap-3 bg-blue-950/30 border border-blue-800/30 rounded-lg px-3 py-2">
+            <i class="fa-solid fa-circle text-blue-400 text-xs animate-pulse"></i>
+            <span class="text-xs text-blue-300 font-medium">SOC Case #1042 — Escalated</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== HOW IT WORKS ===================== -->
+  <section id="how-it-works" class="py-28 px-6 bg-slate-900/30 relative">
+    <div class="absolute inset-0 grid-pattern opacity-50"></div>
+    <div class="max-w-5xl mx-auto relative">
+      <div class="text-center mb-16 fade-up">
+        <span class="text-xs text-purple-400 uppercase tracking-widest font-semibold">Workflow</span>
+        <h2 class="text-4xl lg:text-5xl font-black mt-3 mb-5">
+          How <span class="gradient-text">GuardMail AI</span> Works
+        </h2>
+        <p class="text-slate-400 max-w-lg mx-auto">From sign-in to full inbox protection in under 60 seconds.</p>
+      </div>
+
+      <!-- Steps -->
+      <div class="grid md:grid-cols-3 gap-8 relative">
+
+        <!-- Connector lines (desktop) -->
+        <div class="hidden md:block absolute top-8 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-indigo-600/50 to-purple-600/50"></div>
+
+        <!-- Step 1 -->
+        <div class="fade-up delay-1 text-center">
+          <div class="relative inline-flex mb-6">
+            <div class="w-16 h-16 bg-indigo-900/60 border-2 border-indigo-600 rounded-2xl flex items-center justify-center pulse-ring mx-auto">
+              <i class="fa-brands fa-google text-indigo-400 text-2xl"></i>
+            </div>
+            <span class="absolute -top-2 -right-2 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-3">Connect Gmail</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            Sign in with your Google account using secure OAuth 2.0. We request Gmail.readonly — read-only access. We never send, delete, or modify emails.
+          </p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="fade-up delay-2 text-center">
+          <div class="relative inline-flex mb-6">
+            <div class="w-16 h-16 bg-purple-900/60 border-2 border-purple-600 rounded-2xl flex items-center justify-center mx-auto">
+              <i class="fa-solid fa-magnifying-glass text-purple-400 text-2xl"></i>
+            </div>
+            <span class="absolute -top-2 -right-2 w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-3">AI Scans & Scores</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            GuardMail AI fetches your recent emails, calculates risk scores, detects brand spoofing, and classifies threats using Groq's fast inference engine.
+          </p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="fade-up delay-3 text-center">
+          <div class="relative inline-flex mb-6">
+            <div class="w-16 h-16 bg-emerald-900/60 border-2 border-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
+              <i class="fa-solid fa-shield-halved text-emerald-400 text-2xl"></i>
+            </div>
+            <span class="absolute -top-2 -right-2 w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-3">Protect & Learn</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            Review threat reports, inspect malicious links in the sandbox, complete phishing quizzes, and escalate incidents to your SOC team — all from one dashboard.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== STATS ===================== -->
+  <section id="stats" class="py-24 px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="fade-up text-center mb-14">
+        <span class="text-xs text-rose-400 uppercase tracking-widest font-semibold">By the numbers</span>
+        <h2 class="text-4xl font-black mt-3">The Threat is <span class="gradient-text-danger">Real</span></h2>
+      </div>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="fade-up delay-1 text-center gradient-border rounded-2xl p-8 bg-slate-900/40">
+          <p class="stat-number gradient-text">3.4B</p>
+          <p class="text-slate-400 text-sm mt-2">Phishing emails sent daily worldwide</p>
+        </div>
+        <div class="fade-up delay-2 text-center gradient-border rounded-2xl p-8 bg-slate-900/40">
+          <p class="stat-number text-rose-400">83%</p>
+          <p class="text-slate-400 text-sm mt-2">Of organizations experienced phishing in 2024</p>
+        </div>
+        <div class="fade-up delay-3 text-center gradient-border rounded-2xl p-8 bg-slate-900/40">
+          <p class="stat-number text-amber-400">$4.9M</p>
+          <p class="text-slate-400 text-sm mt-2">Average cost of a phishing breach</p>
+        </div>
+        <div class="fade-up delay-4 text-center gradient-border rounded-2xl p-8 bg-slate-900/40">
+          <p class="stat-number text-emerald-400">97%</p>
+          <p class="stat-number text-emerald-400 text-2xl leading-none font-black"></p>
+          <p class="text-slate-400 text-sm mt-2">Of attacks could be prevented with awareness training</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== BROWSER EXTENSION ===================== -->
+  <section id="extension" class="py-28 px-6 bg-slate-900/40 relative overflow-hidden">
+    <div class="orb orb-2" style="opacity:0.5; bottom: -100px; top: auto; right: -100px;"></div>
+    <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+      <!-- Left: Extension mockup -->
+      <div class="fade-up order-2 lg:order-1 relative">
+        <!-- Browser frame -->
+        <div class="relative">
+          <div class="absolute -inset-4 bg-purple-600/10 rounded-3xl filter blur-2xl"></div>
+          <div class="relative gradient-border rounded-2xl overflow-hidden glow-purple">
+            <!-- Browser bar -->
+            <div class="bg-slate-800 px-4 py-2.5 flex items-center gap-3 border-b border-slate-700">
+              <div class="flex gap-1.5">
+                <div class="w-3 h-3 rounded-full bg-rose-500"></div>
+                <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+              </div>
+              <div class="flex-1 bg-slate-700 rounded-md px-3 py-1 text-xs text-slate-400 font-mono">
+                mail.google.com
+              </div>
+              <div class="w-6 h-6 shield-bg rounded flex items-center justify-center">
+                <i class="fa-solid fa-shield-halved text-indigo-400 text-xs"></i>
+              </div>
+            </div>
+
+            <!-- Gmail-like interface -->
+            <div class="bg-slate-950 p-5">
+              <!-- Email header -->
+              <div class="mb-4">
+                <h4 class="text-sm font-semibold text-white">Urgent: Your Account Has Been Suspended</h4>
+                <p class="text-xs text-slate-500 mt-0.5">From: security@paypa1.com · To: you</p>
+              </div>
+              <div class="text-xs text-slate-400 leading-relaxed mb-4 bg-slate-900/50 rounded-lg p-3 border border-slate-800">
+                Dear Customer, We have detected unusual activity on your PayPal account. Please verify your identity immediately by clicking the link below or your account will be permanently suspended...
+                <span class="text-blue-400 underline cursor-pointer">paypa1.com/verify-account-now</span>
+              </div>
+
+              <!-- GuardMail Extension Ribbon -->
+              <div class="bg-rose-950/60 border border-rose-700/60 rounded-xl p-4 glow-rose">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-rose-400"></i>
+                    <span class="text-sm font-bold text-white">GuardMail AI</span>
+                  </div>
+                  <span class="badge-scam text-xs px-2.5 py-1 rounded-full font-bold">CRITICAL THREAT</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                  <div class="bg-slate-900/60 rounded-lg p-2 text-center">
+                    <p class="text-xs text-slate-500">Risk Score</p>
+                    <p class="text-xl font-black text-rose-400">87<span class="text-sm">/100</span></p>
+                  </div>
+                  <div class="bg-slate-900/60 rounded-lg p-2 text-center">
+                    <p class="text-xs text-slate-500">Brand Spoofed</p>
+                    <p class="text-sm font-bold text-amber-400 mt-1"><i class="fa-brands fa-paypal mr-1"></i>PayPal</p>
+                  </div>
+                </div>
+                <a href="#" class="block text-center text-xs text-indigo-400 hover:text-indigo-300 font-medium">
+                  View Full Analysis → <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-xs"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Text -->
+      <div class="fade-up order-1 lg:order-2">
+        <span class="text-xs text-purple-400 uppercase tracking-widest font-semibold">Browser Extension</span>
+        <h2 class="text-4xl lg:text-5xl font-black mt-3 mb-6">
+          Protection
+          <span class="gradient-text block">Wherever You Read Email</span>
+        </h2>
+        <p class="text-slate-400 leading-relaxed mb-8">
+          Install the GuardMail AI browser extension and get instant threat analysis on Gmail, Yahoo Mail, and Outlook — all without leaving your inbox. One click is all it takes.
+        </p>
+
+        <div class="space-y-4 mb-10">
+          <div class="flex items-start gap-4">
+            <div class="w-8 h-8 bg-purple-900/50 border border-purple-700/40 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+              <i class="fa-solid fa-bolt text-purple-400 text-xs"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-white mb-1">Instant Inline Analysis</p>
+              <p class="text-sm text-slate-400">Security ribbon appears directly in your inbox — risk score, threat verdict, and spoofing alerts at a glance.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <div class="w-8 h-8 bg-indigo-900/50 border border-indigo-700/40 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+              <i class="fa-solid fa-envelope-open text-indigo-400 text-xs"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-white mb-1">Multi-Platform Support</p>
+              <p class="text-sm text-slate-400">Works on Gmail, Yahoo Mail, and Outlook (Live, Office 365, and corporate). One extension, all your inboxes.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <div class="w-8 h-8 bg-emerald-900/50 border border-emerald-700/40 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+              <i class="fa-solid fa-shield-check text-emerald-400 text-xs"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-white mb-1">Privacy First</p>
+              <p class="text-sm text-slate-400">Email content is sent to your own GuardMail instance for analysis — not stored, not shared, not sold.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-4 flex-wrap">
+          <a href="#" class="btn-primary flex items-center gap-3 px-6 py-3.5 rounded-xl font-semibold text-sm">
+            <i class="fa-brands fa-chrome"></i> Add to Chrome
+          </a>
+          <a href="#" class="flex items-center gap-3 px-6 py-3.5 rounded-xl font-semibold text-sm border border-slate-700 text-slate-300 hover:border-indigo-600 hover:text-white transition-all">
+            <i class="fa-brands fa-firefox-browser"></i> Add to Firefox
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CTA SECTION ===================== -->
+  <section class="py-28 px-6 relative overflow-hidden">
+    <!-- Background glow -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div class="w-[600px] h-[600px] bg-indigo-600/10 rounded-full filter blur-3xl"></div>
+    </div>
+
+    <div class="max-w-3xl mx-auto text-center relative fade-up">
+      <div class="inline-flex items-center justify-center w-20 h-20 shield-bg rounded-3xl mb-8 glow-indigo pulse-ring">
+        <i class="fa-solid fa-shield-halved text-indigo-400 text-3xl"></i>
+      </div>
+
+      <h2 class="text-4xl lg:text-6xl font-black mb-6">
+        Your inbox deserves
+        <span class="gradient-text block">real protection.</span>
+      </h2>
+
+      <p class="text-lg text-slate-400 mb-10 max-w-xl mx-auto">
+        Join thousands of users who've stopped phishing, scams, and brand spoofing with GuardMail AI. It takes 30 seconds to connect.
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/login" class="btn-primary flex items-center justify-center gap-3 px-10 py-5 rounded-xl font-bold text-lg">
+          <i class="fa-brands fa-google"></i>
+          Start Free with Google
+        </a>
+      </div>
+
+      <p class="text-xs text-slate-600 mt-5">
+        <i class="fa-solid fa-lock mr-1.5"></i>
+        No data stored · Gmail.readonly only · Disconnect anytime
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="border-t border-slate-800/60 py-10 px-6">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <!-- Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 shield-bg rounded-lg flex items-center justify-center">
+          <i class="fa-solid fa-shield-halved text-indigo-400 text-sm"></i>
+        </div>
+        <span class="text-sm font-bold text-slate-300">
+          GuardMail <span class="gradient-text">AI</span>
+        </span>
+      </div>
+
+      <p class="text-xs text-slate-600 text-center">
+        Built for cybersecurity education and inbox protection.
+        <br>Uses Gmail.readonly scope — your emails are never modified or stored.
+      </p>
+
+      <div class="flex items-center gap-6 text-xs text-slate-600">
+        <a href="/login" class="hover:text-slate-400 transition-colors">Sign In</a>
+        <span class="text-slate-800">·</span>
+        <span class="flex items-center gap-1.5">
+          <i class="fa-solid fa-shield-halved text-indigo-600"></i>
+          Secured by AI
+        </span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================== SCRIPTS ===================== -->
+  <script>
+    // Navbar scroll effect
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 20) {
+        navbar.classList.add('nav-scrolled');
+      } else {
+        navbar.classList.remove('nav-scrolled');
+      }
+    });
+
+    // Fade-up on scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Close mobile menu if open
+          document.getElementById('mobileMenu').classList.add('hidden');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

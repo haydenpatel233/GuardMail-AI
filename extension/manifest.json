@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "GuardMail AI - Threat Auditor Bridge",
+  "version": "2.7",
+  "description": "Extracts text profiles from active Mail elements (Gmail, Yahoo, Outlook) to evaluate indicators of compromise.",
+  "permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:4245/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://mail.google.com/*",
+        "https://mail.yahoo.com/*",
+        "https://outlook.live.com/*",
+        "https://outlook.office.com/*",
+        "https://outlook.office365.com/*"
+      ],
+      "js": ["content.js"]
+    }
+  ]
+}

@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuardMail AI - Threat Simulation Sandbox</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #060913;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #060913; }
+        ::-webkit-scrollbar-thumb { background: #131c2e; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #1e2d4a; }
+        .premium-panel {
+            background: rgba(15, 22, 38, 0.7);
+            border: 1px solid rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(16px);
+        }
+        .glow-indigo {
+            box-shadow: 0 0 25px -5px rgba(79, 70, 229, 0.2);
+        }
+        .glow-rose {
+            box-shadow: 0 0 25px -5px rgba(244, 63, 94, 0.2);
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen selection:bg-indigo-500/30">
+
+    {% if not logged_in %}
+    <div class="min-h-screen flex flex-col justify-center items-center px-4 relative overflow-hidden">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-md w-full bg-[#0d1321]/80 border border-slate-800/60 p-8 rounded-3xl shadow-2xl text-center space-y-6 backdrop-blur-xl relative z-10">
+            <div class="inline-flex bg-gradient-to-tr from-indigo-600 to-purple-600 text-white p-4 rounded-2xl shadow-lg shadow-indigo-500/25">
+                <i class="fa-solid fa-shield-halved text-3xl"></i>
+            </div>
+            <div>
+                <h1 class="text-3xl font-black tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">GuardMail <span class="text-indigo-400">AI</span></h1>
+                <p class="text-xs text-slate-400 mt-2 leading-relaxed font-medium tracking-wide">Direct Enterprise-Grade Threat Simulation & Phishing Analysis Gateway</p>
+            </div>
+            <div class="border-t border-slate-800/60 my-2"></div>
+            <p class="text-xs text-slate-400 leading-relaxed">Connect your Google account securely to scan incoming mail streams, analyze active threat variants, and simulate remediation layers instantly without external extensions.</p>
+            
+            <a href="/login" class="w-full flex items-center justify-center space-x-3 bg-white text-slate-950 font-bold hover:bg-slate-100 py-3.5 px-4 rounded-xl transition duration-150 shadow-md transform hover:-translate-y-0.5 cursor-pointer">
+                <i class="fa-brands fa-google text-lg text-red-500"></i>
+                <span>Sign in with Google Account</span>
+            </a>
+            
+            <p class="text-[10px] text-slate-500 font-mono tracking-wider uppercase font-bold">Scope Requested: gmail.readonly</p>
+        </div>
+    </div>
+    {% else %}
+
+    <script>
+        window.allEmails = {{ emails | tojson }};
+        window.nextPageToken = {{ next_token | tojson }};
+    </script>
+
+    <header class="border-b border-slate-900 bg-[#080d1a]/90 backdrop-blur-md px-4 py-3 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2.5">
+                <div class="bg-gradient-to-tr from-indigo-600 to-purple-600 text-white p-2 rounded-xl shadow-md shadow-indigo-500/25">
+                    <i class="fa-solid fa-shield-halved text-base"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-extrabold tracking-tight text-white">GuardMail <span class="text-indigo-400">AI</span></h1>
+                    <div class="hidden sm:flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Live Security Feed</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- Mobile URL button — desktop only -->
+                <button onclick="showMobileUrl()" title="Open on mobile" class="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-indigo-300 bg-[#0e1424] border border-slate-800 hover:border-indigo-500/30 px-2.5 py-1.5 rounded-xl transition cursor-pointer">
+                    <i class="fa-solid fa-mobile-screen-button text-sm"></i>
+                </button>
+                <!-- Gmail badge — shown when extension is active on Gmail -->
+                <div id="badge-gmail" class="hidden sm:flex bg-indigo-500/5 border border-indigo-500/10 px-3 py-1.5 rounded-xl text-[11px] text-indigo-300 items-center space-x-2 font-medium transition">
+                    <i class="fa-brands fa-google text-red-400"></i>
+                    <span class="font-mono text-slate-400">Gmail Connected</span>
+                </div>
+                <!-- Yahoo badge — shown when extension is active on Yahoo Mail -->
+                <div id="badge-yahoo" class="hidden bg-purple-500/5 border border-purple-500/10 px-3 py-1.5 rounded-xl text-[11px] text-purple-300 items-center space-x-2 font-medium transition">
+                    <i class="fa-brands fa-yahoo text-purple-400"></i>
+                    <span class="font-mono text-slate-400">Yahoo Connected</span>
+                </div>
+                {% if logged_in %}
+                <button onclick="openAgentModal()" class="flex items-center gap-2 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 px-3 py-1.5 rounded-xl transition shadow-md shadow-indigo-500/30">
+                    <i class="fa-solid fa-robot text-sm"></i>
+                    <span class="hidden sm:inline">AI Agent</span>
+                </button>
+                <a href="/logout" class="text-xs font-bold text-slate-400 hover:text-rose-400 bg-[#0e1424] border border-slate-800 px-3 py-1.5 rounded-xl transition">
+                    <i class="fa-solid fa-right-from-bracket sm:mr-1.5"></i><span class="hidden sm:inline">Sign Out</span>
+                </a>
+                {% else %}
+                <a href="/login" class="flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 px-3 py-1.5 rounded-xl transition shadow-md shadow-indigo-500/30">
+                    <i class="fa-brands fa-google text-sm"></i>
+                    <span>Connect Gmail</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 lg:p-6 space-y-4 lg:space-y-6 pb-24 lg:pb-6">
+
+        {% if not logged_in %}
+        <div class="flex items-center gap-3 bg-indigo-500/5 border border-indigo-500/20 rounded-xl px-4 py-3 text-[12px] text-slate-300">
+            <i class="fa-solid fa-eye text-indigo-400 text-sm shrink-0"></i>
+            <span><strong class="text-indigo-300">View-only mode</strong> — showing extension-scanned emails. <a href="/login" class="text-indigo-400 font-bold underline underline-offset-2">Connect Gmail</a> to run the AI agent and scan your inbox.</span>
+        </div>
+        {% endif %}
+
+        {% set risk_count = namespace(value=0) %}
+        {% for e in emails %}
+            {% if e.initial_category == 'Scam Alert' or e.initial_category == 'Spam' %}
+                {% set risk_count.value = risk_count.value + 1 %}
+            {% endif %}
+        {% endfor %}
+        {% if analytics.total > 0 %}
+            {% set calculated_percentage = ((risk_count.value / analytics.total) * 100) | round | int %}
+        {% else %}
+            {% set calculated_percentage = 0 %}
+        {% endif %}
+
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="premium-panel p-4 rounded-2xl flex flex-col justify-between transition hover:border-slate-700">
+                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Audited</p>
+                <div class="flex items-baseline justify-between mt-2">
+                    <p id="stat-total" class="text-3xl font-extrabold text-white font-mono">{{ analytics.total }}</p>
+                    <span class="text-slate-600 text-xs"><i class="fa-solid fa-satellite-dish"></i></span>
+                </div>
+            </div>
+            <div class="premium-panel p-4 rounded-2xl flex flex-col justify-between transition hover:border-rose-900/50">
+                <p class="text-[10px] uppercase tracking-wider text-rose-400 font-bold">Spoofed</p>
+                <div class="flex items-baseline justify-between mt-2">
+                    <p id="stat-spoofed" class="text-3xl font-extrabold text-rose-400 font-mono">{{ analytics.spoofed }}</p>
+                    <span class="text-rose-500/40 text-xs"><i class="fa-solid fa-mask"></i></span>
+                </div>
+            </div>
+            <div class="premium-panel p-4 rounded-2xl flex flex-col justify-between transition hover:border-amber-900/50">
+                <p class="text-[10px] uppercase tracking-wider text-amber-400 font-bold">SOC Cases</p>
+                <div class="flex items-baseline justify-between mt-2">
+                    <p class="text-3xl font-extrabold text-amber-400 font-mono">{{ analytics.soc_cases }}</p>
+                    <span class="text-amber-500/40 text-xs"><i class="fa-solid fa-box-archive"></i></span>
+                </div>
+            </div>
+            <div class="premium-panel p-4 rounded-2xl flex flex-col justify-between border-rose-950/40 bg-gradient-to-br from-[#0f1526] to-[#1f131a]">
+                <p class="text-[10px] uppercase tracking-wider text-rose-300 font-bold">Risk Rate</p>
+                <div class="flex items-baseline justify-between mt-2">
+                    <p id="stat-density" class="text-3xl font-extrabold text-rose-400 font-mono">{{ calculated_percentage }}%</p>
+                    <span class="text-rose-400/40 text-xs"><i class="fa-solid fa-shield-virus"></i></span>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
+
+            <section id="section-feed" class="lg:col-span-5 bg-[#0b0f19] border border-slate-900 rounded-2xl overflow-hidden shadow-xl flex flex-col">
+                <div class="p-4 bg-[#0f1524] border-b border-slate-900/80 flex justify-between items-center">
+                    <h2 class="font-bold text-slate-300 text-xs uppercase tracking-wider flex items-center space-x-2">
+                        <i class="fa-solid fa-list-check text-indigo-400"></i>
+                        <span>Intercepted Packets</span>
+                    </h2>
+                    <button onclick="window.location.reload()" class="text-[10px] bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 font-bold px-2.5 py-1 rounded-lg transition cursor-pointer">
+                        <i class="fa-solid fa-sync mr-1"></i> Sync
+                    </button>
+                </div>
+
+                <div class="divide-y divide-slate-900/60 overflow-y-auto flex-1 min-h-[320px] max-h-[50vh] lg:min-h-[480px] lg:max-h-[680px]">
+                    {% if emails|length == 0 %}
+                    <div class="p-8 text-center text-slate-600 space-y-3 mt-16 animate-pulse">
+                        <i class="fa-solid fa-cube text-4xl opacity-20"></i>
+                        <p class="text-xs max-w-xs mx-auto leading-relaxed">No data packets found in your connected inbox.</p>
+                    </div>
+                    {% endif %}
+
+                    {% for email in emails %}
+                    <div onclick="selectEmail('{{ email.id }}')"
+                         id="email-card-{{ email.id }}"
+                         data-dedup="{{ ((email.sender or '') + '|||' + (email.subject or '')) | lower | trim }}"
+                         class="p-4 hover:bg-[#121826] transition duration-150 cursor-pointer relative border-b border-slate-900/40 font-sans">
+
+                        <div class="flex justify-between items-start mb-1.5">
+                            <span class="font-mono text-[11px] font-medium text-slate-400 truncate max-w-[200px] block">{{ email.sender }}</span>
+                            <span class="text-[9px] bg-slate-900/80 text-slate-500 px-1.5 py-0.5 rounded font-mono font-medium">{{ email.id }}</span>
+                        </div>
+
+                        <h3 class="text-xs font-bold text-slate-200 truncate mb-1">{{ email.subject if email.subject else '(No Subject)' }}</h3>
+                        <p class="text-[11px] text-slate-400 line-clamp-2 leading-relaxed font-sans opacity-80">{{ email.body }}</p>
+
+                        <div class="mt-3 flex items-center justify-between">
+                            <span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase
+                                {% if email.initial_category == 'Scam Alert' %}bg-rose-500/10 text-rose-400 border border-rose-500/20
+                                {% elif email.initial_category == 'Spam' %}bg-amber-500/10 text-amber-400 border border-amber-500/20
+                                {% elif email.initial_category == 'High Priority' %}bg-purple-500/10 text-purple-400 border border-purple-500/20
+                                {% elif email.initial_category == 'Safe' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+                                {% else %}bg-slate-800/40 text-slate-400 border border-slate-700/30{% endif %}">
+                                {% if email.initial_category == 'Scam Alert' %}SCAM{% else %}{{ email.initial_category }}{% endif %}
+                            </span>
+                            <span class="text-[10px] font-mono font-medium text-slate-500 bg-slate-900/40 px-2 py-0.5 rounded border border-slate-900">
+                                <span class="{% if email.risk_score >= 70 %}text-rose-400 font-bold{% elif email.risk_score >= 40 %}text-amber-400{% else %}text-slate-400{% endif %}">{{ email.risk_score }}</span>/100
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <div id="load-more-container" class="p-3 bg-slate-900/10 text-center {% if not next_token %}hidden{% endif %}">
+                        <button onclick="loadNextBatch()" id="load-more-btn" class="w-full py-2.5 text-xs font-bold text-indigo-400 bg-indigo-600/5 hover:bg-indigo-600/10 border border-indigo-500/10 rounded-xl transition cursor-pointer flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-angle-down text-sm"></i>
+                            <span>Load Past Mail Packets</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-analysis" class="lg:col-span-7 flex flex-col space-y-4 lg:space-y-6">
+                
+                <div id="viewer-pane" class="bg-[#0b0f19] border border-slate-900 rounded-2xl p-6 shadow-2xl min-h-[180px] flex flex-col justify-center items-center text-center text-slate-500 transition">
+                    <i class="fa-solid fa-terminal text-3xl mb-3 text-slate-700"></i>
+                    <p class="text-xs max-w-sm leading-relaxed font-medium">Select any active inbox data row from the tracking module to map its architecture, content headers, and analyze indicators of compromise.</p>
+                </div>
+
+                <div id="sandbox-pane" class="hidden bg-[#0b0f19] border border-slate-900 rounded-2xl p-5 shadow-2xl transition duration-200 overflow-hidden">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-3.5 flex items-center space-x-2 border-b border-slate-900 pb-2">
+                        <i class="fa-solid fa-link text-xs"></i>
+                        <span>Hyperlink Safety Sandbox Parser</span>
+                    </div>
+                    <div id="sandbox-links-list" class="space-y-2"></div>
+                </div>
+
+                <div id="ai-pane" class="hidden bg-[#0b0f19] border border-slate-900 rounded-2xl p-6 shadow-2xl bg-gradient-to-b from-[#0b0f19] to-[#0f1221] transition duration-200">
+                    <div class="flex items-center space-x-2 text-indigo-400 font-bold text-xs uppercase tracking-wider mb-4 border-b border-slate-900 pb-2">
+                        <i class="fa-solid fa-brain"></i>
+                        <span>AI Threat Analysis</span>
+                    </div>
+                    
+                    <div id="ai-loading" class="py-8 text-center text-slate-500 space-y-2">
+                        <i class="fa-solid fa-circle-notch text-2xl text-indigo-500 animate-spin"></i>
+                        <p class="text-xs tracking-wide">Querying live inference pipeline via Groq Cloud Core architecture...</p>
+                    </div>
+
+                    <div id="ai-content" class="hidden space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <label class="text-[9px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Assigned Threat Variant Vector:</label>
+                                <div id="ai-threat-type" class="inline-block bg-rose-500/10 text-rose-400 border border-rose-500/20 px-3 py-1 rounded-xl font-bold text-xs uppercase tracking-wide">
+                                    --
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <label class="text-[9px] uppercase font-bold tracking-wider text-slate-500 block mb-2">Structural Compromise Indication Markers:</label>
+                            <div id="ai-indicators-box" class="grid grid-cols-1 gap-2"></div>
+                        </div>
+
+                        <div class="pt-2">
+                            <label class="text-[9px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Educational Threat Report Summary:</label>
+                            <div class="bg-[#070b12] rounded-xl p-4 border border-slate-900/60 text-xs text-slate-300 leading-relaxed font-sans" id="ai-report">
+                                --
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="quiz-pane" class="hidden bg-[#0b0f19] border border-slate-900 rounded-2xl p-6 shadow-2xl bg-gradient-to-b from-[#0b0f19] to-[#161224] transition duration-200">
+                    <div class="flex items-center space-x-2 text-purple-400 font-bold text-xs uppercase tracking-wider mb-3 border-b border-slate-900 pb-2">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        <span>Threat Simulation Quiz Arena</span>
+                    </div>
+                    <div id="quiz-loading" class="py-4 text-center text-slate-500 text-xs animate-pulse">
+                        <i class="fa-solid fa-spinner fa-spin mr-2"></i>Compiling interactive test framework...
+                    </div>
+                    <div id="quiz-content" class="hidden space-y-4">
+                        <p id="quiz-question-text" class="text-xs font-bold text-slate-200 leading-relaxed"></p>
+                        <div id="quiz-options-box" class="grid grid-cols-1 gap-2"></div>
+                        <div id="quiz-feedback" class="hidden text-xs p-3.5 rounded-xl border font-sans leading-relaxed"></div>
+                    </div>
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+    <!-- Mobile bottom tab bar -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#080d1a]/95 border-t border-slate-800 backdrop-blur-md flex">
+        <button id="mob-tab-inbox" onclick="switchMobileTab('inbox')" class="flex-1 py-3 flex flex-col items-center gap-1 text-indigo-400 transition">
+            <i class="fa-solid fa-inbox text-base"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Inbox</span>
+        </button>
+        <button id="mob-tab-analysis" onclick="switchMobileTab('analysis')" class="flex-1 py-3 flex flex-col items-center gap-1 text-slate-500 transition">
+            <i class="fa-solid fa-shield-halved text-base"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Analysis</span>
+        </button>
+    </nav>
+
+    <script>
+        let activeQuizData = null;
+
+        async function showMobileUrl() {
+            try {
+                const r = await fetch('/api/network-info');
+                const d = await r.json();
+                const url = d.mobile_url;
+                const msg = `Open on your phone:\n\n${url}\n\n(Your phone must be on the same Wi-Fi)`;
+                if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(url).catch(() => {});
+                }
+                alert(msg + (navigator.clipboard ? '\n\nURL copied to clipboard.' : ''));
+            } catch(e) {
+                alert('Could not fetch mobile URL. Make sure the server is running.');
+            }
+        }
+
+        function switchMobileTab(tab) {
+            if (window.innerWidth >= 1024) return;
+            const feed     = document.getElementById('section-feed');
+            const analysis = document.getElementById('section-analysis');
+            const btnInbox = document.getElementById('mob-tab-inbox');
+            const btnAnal  = document.getElementById('mob-tab-analysis');
+            if (tab === 'inbox') {
+                feed.style.display     = '';
+                analysis.style.display = 'none';
+                btnInbox.className = btnInbox.className.replace('text-slate-500','text-indigo-400');
+                btnAnal.className  = btnAnal.className.replace('text-indigo-400','text-slate-500');
+            } else {
+                feed.style.display     = 'none';
+                analysis.style.display = '';
+                btnAnal.className  = btnAnal.className.replace('text-slate-500','text-indigo-400');
+                btnInbox.className = btnInbox.className.replace('text-indigo-400','text-slate-500');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function updateRiskDensityMatrixUI() {
+            // stat-total is managed separately (monotonic, never recomputed from array)
+            const total          = window.allEmails.length;
+            const spoofedCount   = window.allEmails.filter(e => e.spoofing_detected).length;
+            const maliciousCount = window.allEmails.filter(e => e.initial_category === 'Scam Alert' || e.initial_category === 'Spam').length;
+            const computedDensity = total > 0 ? Math.round((maliciousCount / total) * 100) : 0;
+            const spoofedEl = document.getElementById('stat-spoofed');
+            const densityEl = document.getElementById('stat-density');
+            if (spoofedEl) spoofedEl.textContent = spoofedCount;
+            if (densityEl) densityEl.textContent = computedDensity + '%';
+        }
+
+        // Increment the audited counter by n — updates display and localStorage floor
+        // Remove the oldest email card when the server evicts it to stay under 250
+        function evictCard(id) {
+            if (!id) return;
+            const card = document.getElementById('email-card-' + id);
+            if (card) card.remove();
+            window.allEmails = window.allEmails.filter(e => e.id !== id);
+        }
+
+        function bumpAudited(n) {
+            const el = document.getElementById('stat-total');
+            if (!el) return;
+            const next = parseInt(el.textContent || '0') + n;
+            el.textContent = next;
+            localStorage.setItem('gm_total_audited', next);
+        }
+
+        // ── Platform badge polling ─────────────────────────────────────────────
+        function refreshPlatformBadges() {
+            fetch('/api/platform-status')
+                .then(r => r.json())
+                .then(d => {
+                    const gmailBadge = document.getElementById('badge-gmail');
+                    const yahooBadge = document.getElementById('badge-yahoo');
+                    if (gmailBadge) gmailBadge.style.display = d.gmail   ? 'flex' : 'none';
+                    if (yahooBadge) yahooBadge.style.display = d.yahoo   ? 'flex' : 'none';
+                })
+                .catch(() => {});
+        }
+        refreshPlatformBadges();
+        setInterval(refreshPlatformBadges, 10000);
+
+        function selectEmail(id, triggerUrlUpdate = true) {
+            const email = window.allEmails.find(e => e.id === id);
+            if (!email) return;
+
+            switchMobileTab('analysis');
+
+            window.allEmails.forEach(e => {
+                const card = document.getElementById(`email-card-${e.id}`);
+                if (card) card.className = card.className.replace(/\bring-1\b.*|bg-\[#121826\]/g, '').trim();
+            });
+            
+            const activeCard = document.getElementById(`email-card-${id}`);
+            if (activeCard) activeCard.classList.add('bg-[#121826]', 'ring-1', 'ring-slate-800');
+
+            if (triggerUrlUpdate) {
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?emailId=' + id;
+                window.history.pushState({ path: newUrl }, '', newUrl);
+            }
+
+            const viewerPane = document.getElementById('viewer-pane');
+            viewerPane.className = "bg-[#0b0f19] border border-slate-900 rounded-2xl p-6 shadow-2xl flex flex-col justify-between text-left";
+            viewerPane.innerHTML = `
+                <div class="w-full">
+                    <div class="border-b border-slate-900 pb-3 mb-4 flex justify-between items-start gap-4">
+                        <div class="max-w-[80%] space-y-1">
+                            <div class="text-xs text-slate-300 font-mono flex items-center gap-1"><span class="font-bold text-slate-500 uppercase text-[9px] tracking-wider">From:</span> <span id="view-sender-text" class="text-slate-300"></span></div>
+                            <div class="text-xs font-bold text-slate-200"><span class="font-bold text-slate-500 uppercase text-[9px] tracking-wider font-normal">Subject:</span> <span id="view-subject-text"></span></div>
+                        </div>
+                        <div class="text-right min-w-[65px]">
+                            <span class="text-[8px] uppercase font-bold text-slate-500 block tracking-wider">Risk Index</span>
+                            <span class="text-xl font-extrabold font-mono ${email.risk_score >= 70 ? 'text-rose-400' : email.risk_score >= 40 ? 'text-amber-400' : 'text-emerald-400'}">${email.risk_score || 10}%</span>
+                        </div>
+                    </div>
+
+                    ${email.spoofing_detected ? `
+                    <div class="bg-rose-500/5 border border-rose-500/20 px-3 py-2.5 rounded-xl text-[11px] text-rose-400 flex items-center space-x-2 mb-3 font-sans leading-normal">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-500 animate-pulse"></i>
+                        <span><strong>Brand Impersonation Detected:</strong> Header identity context claims do not match true routing endpoints.</span>
+                    </div>
+                    ` : ''}
+
+                    ${(email.initial_category === 'Spam' || email.initial_category === 'Scam Alert') && email.threat_reasoning ? `
+                    <div class="bg-amber-500/5 border border-amber-500/20 px-3 py-2.5 rounded-xl text-[11px] text-amber-300 mb-3 font-sans leading-relaxed">
+                        <div class="flex items-center gap-1.5 mb-1 font-bold text-amber-400">
+                            <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
+                            Why ${email.initial_category === 'Scam Alert' ? 'Scam Alert' : 'Spam'}?
+                        </div>
+                        <span class="text-slate-300 leading-relaxed">${email.threat_reasoning}</span>
+                    </div>
+                    ` : ''}
+
+                    <div id="email-body-content-target" class="max-h-[340px] overflow-y-auto pr-1 text-xs text-slate-300 whitespace-pre-line leading-relaxed font-sans mb-5 bg-[#070b12] p-4 rounded-xl border border-slate-900/60 opacity-90"></div>
+                    
+                    <div class="border-t border-slate-900 pt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500">Threat Mitigation Toolkit</span>
+                        <button id="soc-btn-${email.id}" onclick="dispatchSocReport('${email.id}')" 
+                                class="px-3 py-1.5 text-xs font-bold rounded-xl border border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 text-indigo-400 transition cursor-pointer ${email.soc_reported ? 'opacity-40 pointer-events-none border-slate-800 text-slate-600 bg-transparent' : ''}">
+                            <i class="fa-solid fa-paper-plane mr-1.5 text-[10px]"></i>${email.soc_reported ? 'Reported to Incident Team' : 'Report Incident to Enterprise SOC'}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Show "Name <email>" in detail pane — full address is useful context there
+            const rawSender = email.sender || '';
+            const senderName = (() => {
+                if (!rawSender || rawSender === 'undefined') return 'Unknown Sender';
+                const m = rawSender.match(/^([^<]+?)\s*</);
+                if (m && m[1].trim()) return m[1].trim() + ' — ' + rawSender.match(/<([^>]+)>/)?.[1];
+                return rawSender;
+            })();
+            document.getElementById('view-sender-text').innerText = senderName;
+            document.getElementById('view-subject-text').innerText = email.subject || '(No Subject)';
+            document.getElementById('email-body-content-target').textContent = email.body || '';
+
+            const sandboxPane = document.getElementById('sandbox-pane');
+            const sandboxLinksList = document.getElementById('sandbox-links-list');
+            
+            if (email.links && email.links.length > 0) {
+                sandboxPane.classList.remove('hidden');
+                sandboxLinksList.innerHTML = email.links.map(l => {
+                    const cleanUrl     = l.url.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const domain       = (l.domain || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const isDangerous  = l.safety_status.includes('Dangerous');
+                    const isSuspicious = l.safety_status.includes('Suspicious');
+                    const badgeLabel   = isDangerous ? 'DANGEROUS' : isSuspicious ? 'SUSPICIOUS' : 'EXTERNAL';
+                    const rowBorder    = isDangerous ? 'border-rose-900/40 bg-rose-950/5' : isSuspicious ? 'border-amber-900/30' : 'border-slate-800/60';
+                    const badgeStyle   = isDangerous  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                      : isSuspicious  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                      : 'bg-slate-800/60 text-slate-400 border border-slate-700/40';
+                    const score        = l.url_risk_score || 0;
+                    const barColor     = score >= 60 ? 'bg-rose-500' : score >= 30 ? 'bg-amber-500' : 'bg-emerald-500';
+                    const scoreColor   = score >= 60 ? 'text-rose-400' : score >= 30 ? 'text-amber-400' : 'text-emerald-400';
+                    const reasons      = l.risk_reasons || [];
+                    const reasonsHtml  = reasons.length > 0
+                        ? reasons.map(r => `<li class="flex items-start gap-1.5"><i class="fa-solid fa-triangle-exclamation text-rose-500 mt-0.5 text-[9px] flex-shrink-0"></i><span>${r}</span></li>`).join('')
+                        : '<li class="text-slate-500 italic">No specific threat indicators detected</li>';
+
+                    return `
+                    <div class="border rounded-xl overflow-hidden ${rowBorder}">
+                        <div onclick="toggleLinkPanel(this)" class="p-3 flex flex-col gap-1.5 cursor-pointer hover:bg-white/[0.03] transition select-none">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase whitespace-nowrap ${badgeStyle}">${badgeLabel}</span>
+                                <span class="font-mono text-[9px] ${scoreColor} font-bold">${score}/100 <i class="fa-solid fa-chevron-down ml-1 text-slate-600"></i></span>
+                            </div>
+                            <p class="font-mono text-[11px] text-slate-300 break-all leading-snug">${cleanUrl}</p>
+                        </div>
+                        <div class="link-analysis hidden border-t border-slate-800/50 bg-[#07090f] p-4 space-y-4">
+                            <div>
+                                <p class="text-[9px] uppercase tracking-widest text-slate-500 font-bold mb-1">Domain</p>
+                                <p class="font-mono text-xs text-indigo-300 break-all">${domain}</p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] uppercase tracking-widest text-slate-500 font-bold mb-2">Risk Index</p>
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                        <div class="h-full ${barColor} rounded-full transition-all" style="width:${score}%"></div>
+                                    </div>
+                                    <span class="font-mono text-xs font-black ${scoreColor}">${score}<span class="text-slate-600 font-normal">/100</span></span>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-[9px] uppercase tracking-widest text-slate-500 font-bold mb-2">Threat Indicators</p>
+                                <ul class="space-y-1.5 text-[11px] text-slate-400 font-sans leading-relaxed">${reasonsHtml}</ul>
+                            </div>
+                        </div>
+                    </div>
+                `}).join('');
+            } else {
+                sandboxPane.classList.add('hidden');
+            }
+
+            const aiPane = document.getElementById('ai-pane');
+            const aiLoading = document.getElementById('ai-loading');
+            const aiContent = document.getElementById('ai-content');
+            const quizPane = document.getElementById('quiz-pane');
+
+            quizPane.classList.add('hidden');
+
+            if (email.initial_category === 'Scam Alert' || email.risk_score >= 40) {
+                aiPane.classList.remove('hidden');
+                aiLoading.classList.remove('hidden');
+                aiContent.classList.add('hidden');
+
+                fetch(`/analyze/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sender: email.sender, subject: email.subject, body: email.body })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    aiLoading.classList.add('hidden');
+                    aiContent.classList.remove('hidden');
+                    
+                    const report = data.report || {};
+                    document.getElementById('ai-threat-type').innerText = report.threat_type || "Suspicious Threat Signature";
+                    document.getElementById('ai-report').innerText = report.educational_report || "No analytical metrics generated.";
+                    
+                    const indicatorsBox = document.getElementById('ai-indicators-box');
+                    indicatorsBox.innerHTML = '';
+                    if (report.indicators && report.indicators.length > 0) {
+                        report.indicators.forEach(ind => {
+                            const indicatorBadge = document.createElement('div');
+                            indicatorBadge.className = "flex items-center space-x-2 text-[11px] text-rose-300 bg-rose-950/10 border border-rose-900/30 px-3 py-1.5 rounded-xl font-sans";
+                            indicatorBadge.innerHTML = `<i class="fa-solid fa-circle-exclamation text-rose-500 text-[10px]"></i><span id="ind-text-node"></span>`;
+                            indicatorBadge.querySelector('#ind-text-node').innerText = ind;
+                            indicatorBadge.querySelector('#ind-text-node').removeAttribute('id');
+                            indicatorsBox.appendChild(indicatorBadge);
+                        });
+                    } else {
+                        indicatorsBox.innerHTML = '<div class="text-slate-600 text-xs italic font-sans">No specific indicators itemized.</div>';
+                    }
+
+                    triggerQuizModule(email);
+                })
+                .catch(err => {
+                    aiLoading.classList.add('hidden');
+                    aiContent.classList.remove('hidden');
+                    document.getElementById('ai-threat-type').innerText = "Inference Exception";
+                    document.getElementById('ai-report').innerText = "Failed gathering system properties: " + err;
+                });
+            } else {
+                aiPane.classList.add('hidden');
+            }
+        }
+
+        function loadNextBatch() {
+            if (!window.nextPageToken) return;
+            
+            const loadBtn = document.getElementById('load-more-btn');
+            const container = document.getElementById('load-more-container');
+            const originalInner = loadBtn.innerHTML;
+            
+            loadBtn.disabled = true;
+            loadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sm mr-1.5"></i><span>Fetching Historical Packets...</span>`;
+            
+            fetch(`/api/feed-state?pageToken=${window.nextPageToken}`)
+                .then(res => res.json())
+                .then(data => {
+                    loadBtn.disabled = false;
+                    loadBtn.innerHTML = originalInner;
+                    
+                    if (data.emails && data.emails.length > 0) {
+                        data.emails.forEach(email => {
+                            if (!window.allEmails.some(existing => existing.id === email.id)) {
+                                window.allEmails.push(email);
+
+                                // Remove any existing card with same sender+subject (dedup)
+                                const batchDedupKey = ((email.sender || '') + '|||' + (email.subject || '')).toLowerCase().trim();
+                                document.querySelectorAll('[data-dedup]').forEach(card => {
+                                    if (card.dataset.dedup === batchDedupKey) {
+                                        const staleId = card.id.replace('email-card-', '');
+                                        window.allEmails = window.allEmails.filter(e => e.id !== staleId);
+                                        card.remove();
+                                    }
+                                });
+
+                                let categoryBadgeMarkup = '';
+                                if (email.initial_category === 'Scam Alert') {
+                                    categoryBadgeMarkup = `<span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-rose-500/10 text-rose-400 border border-rose-500/20">SCAM</span>`;
+                                } else if (email.initial_category === 'Spam') {
+                                    categoryBadgeMarkup = `<span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">SPAM</span>`;
+                                } else if (email.initial_category === 'High Priority') {
+                                    categoryBadgeMarkup = `<span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-purple-500/10 text-purple-400 border border-purple-500/20">${email.initial_category}</span>`;
+                                } else if (email.initial_category === 'Safe') {
+                                    categoryBadgeMarkup = `<span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">SAFE</span>`;
+                                } else {
+                                    categoryBadgeMarkup = `<span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-slate-800/40 text-slate-400 border border-slate-700/30">${email.initial_category}</span>`;
+                                }
+
+                                const cleanSender = (email.sender || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                                const cleanSubject = (email.subject || '(No Subject)').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                                const cleanSnippet = (email.body || '').substring(0, 160).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                                const batchSafeDedup = batchDedupKey.replace(/"/g, '&quot;');
+
+                                const appendHtmlString = `
+                                    <div onclick="selectEmail('${email.id}')"
+                                         id="email-card-${email.id}"
+                                         data-dedup="${batchSafeDedup}"
+                                         class="p-4 hover:bg-[#121826] transition duration-150 cursor-pointer relative border-b border-slate-900/40 font-sans">
+                                        <div class="flex justify-between items-start mb-1.5">
+                                            <span class="font-mono text-[11px] font-medium text-slate-400 truncate max-w-[200px] block">${cleanSender}</span>
+                                            <span class="text-[9px] bg-slate-900/80 text-slate-500 px-1.5 py-0.5 rounded font-mono font-medium">${email.id}</span>
+                                        </div>
+                                        <h3 class="text-xs font-bold text-slate-200 truncate mb-1">${cleanSubject}</h3>
+                                        <p class="text-[11px] text-slate-400 line-clamp-2 leading-relaxed font-sans opacity-80">${cleanSnippet}</p>
+                                        <div class="mt-3 flex items-center justify-between">
+                                            ${categoryBadgeMarkup}
+                                            <span class="text-[10px] font-mono font-medium text-slate-500 bg-slate-900/40 px-2 py-0.5 rounded border border-slate-900">
+                                                <span class="${email.risk_score >= 70 ? 'text-rose-400 font-bold' : email.risk_score >= 40 ? 'text-amber-400' : 'text-slate-400'}">${email.risk_score}</span>/100
+                                            </span>
+                                        </div>
+                                    </div>
+                                `;
+                                container.insertAdjacentHTML('beforebegin', appendHtmlString);
+                                bumpAudited(1);
+                            }
+                        });
+                        updateRiskDensityMatrixUI();
+                    }
+                    
+                    window.nextPageToken = data.next_token || '';
+                    if (!window.nextPageToken) {
+                        container.classList.add('hidden');
+                    }
+                })
+                .catch(err => {
+                    loadBtn.disabled = false;
+                    loadBtn.innerHTML = originalInner;
+                    alert("Failed parsing remote token strings: " + err);
+                });
+        }
+
+        function dispatchSocReport(id) {
+            const socButton = document.getElementById(`soc-btn-${id}`);
+            if (!socButton) return;
+
+            fetch(`/api/report-soc/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    socButton.innerText = "Reported to Incident Team";
+                    socButton.className = "px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-800 text-slate-600 bg-transparent opacity-40 pointer-events-none";
+                    alert("Incident Telemetry Dispatched: Core parameters logged successfully.");
+                    setTimeout(() => { window.location.reload(); }, 600);
+                }
+            })
+            .catch(err => alert("Error transmitting packet configurations: " + err));
+        }
+
+        function triggerQuizModule(email) {
+            const quizPane = document.getElementById('quiz-pane');
+            const quizLoading = document.getElementById('quiz-loading');
+            const quizContent = document.getElementById('quiz-content');
+            const quizFeedback = document.getElementById('quiz-feedback');
+
+            quizPane.classList.remove('hidden');
+            quizLoading.classList.remove('hidden');
+            quizContent.classList.add('hidden');
+            quizFeedback.classList.add('hidden');
+
+            fetch(`/api/quiz/${email.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sender: email.sender, subject: email.subject, body: email.body })
+            })
+            .then(res => res.json())
+            .then(data => {
+                quizLoading.classList.add('hidden');
+                quizContent.classList.remove('hidden');
+                
+                activeQuizData = data.quiz;
+                document.getElementById('quiz-question-text').innerText = activeQuizData.question;
+                
+                const optionsBox = document.getElementById('quiz-options-box');
+                optionsBox.innerHTML = '';
+                
+                activeQuizData.options.forEach((opt, idx) => {
+                    const optBtn = document.createElement('button');
+                    optBtn.className = "w-full text-left bg-[#0d1220] hover:bg-[#151c30] border border-slate-900 p-3 rounded-xl text-xs transition duration-150 cursor-pointer font-medium focus:outline-none focus:ring-1 focus:ring-purple-500 font-sans text-slate-300";
+                    optBtn.innerText = opt;
+                    optBtn.onclick = () => evaluateQuizSelection(idx, optBtn);
+                    optionsBox.appendChild(optBtn);
+                });
+            })
+            .catch(() => {
+                quizPane.classList.add('hidden');
+            });
+        }
+
+        function evaluateQuizSelection(selectedIndex, clickedButton) {
+            if (!activeQuizData) return;
+            
+            const feedback = document.getElementById('quiz-feedback');
+            const optionsBox = document.getElementById('quiz-options-box');
+            
+            Array.from(optionsBox.children).forEach(btn => btn.disabled = true);
+            
+            feedback.classList.remove('hidden');
+            if (selectedIndex === activeQuizData.correct_index) {
+                clickedButton.className = "w-full text-left bg-emerald-950/20 border border-emerald-500/60 text-emerald-400 p-3 rounded-xl text-xs font-bold font-sans";
+                feedback.className = "text-xs p-3.5 rounded-xl border bg-emerald-950/10 border-emerald-900/40 text-emerald-400 font-sans leading-relaxed mt-3";
+                feedback.innerHTML = `<strong><i class="fa-solid fa-square-check mr-1.5"></i>CORRECT VERDICT:</strong> ${activeQuizData.explanation}`;
+            } else {
+                clickedButton.className = "w-full text-left bg-rose-950/20 border border-rose-500/60 text-rose-400 p-3 rounded-xl text-xs font-bold font-sans";
+                feedback.className = "text-xs p-3.5 rounded-xl border bg-rose-950/10 border-rose-900/40 text-rose-400 font-sans leading-relaxed mt-3";
+                
+                const correctBtn = optionsBox.children[activeQuizData.correct_index];
+                if (correctBtn) correctBtn.className = "w-full text-left bg-emerald-950/10 border border-emerald-900/60 text-emerald-400 p-3 rounded-xl text-xs font-bold font-sans";
+                
+                feedback.innerHTML = `<strong><i class="fa-solid fa-circle-xmark mr-1.5"></i>SECURITY BREACH:</strong> ${activeQuizData.explanation}`;
+            }
+        }
+
+        function toggleLinkPanel(header) {
+            const panel   = header.nextElementSibling;
+            const chevron = header.querySelector('.fa-chevron-down, .fa-chevron-up');
+            const isHidden = panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !isHidden);
+            if (chevron) {
+                chevron.classList.toggle('fa-chevron-down', !isHidden);
+                chevron.classList.toggle('fa-chevron-up',   isHidden);
+            }
+        }
+
+        function renderEmailCard(email, prepend = false) {
+            // Skip ghost emails where the extension couldn't extract real data
+            const snd = (email.sender || '').trim().toLowerCase();
+            const sub = (email.subject || '').trim().toLowerCase();
+            const senderEmpty  = snd === '' || snd === '(unknown)' || /^\(yahoo-sender-\d+\)$/.test(snd);
+            const subjectEmpty = sub === '' || sub === '(no subject)' || /^\(yahoo-subject-\d+\)$/.test(sub);
+            if (senderEmpty && subjectEmpty) return false;
+
+            // Remove any earlier duplicate with the same sender + subject before inserting.
+            // Returns false if a duplicate was replaced (don't count toward audited total).
+            const dedupKey = ((email.sender || '') + '|||' + (email.subject || '')).toLowerCase().trim();
+            let replacedDuplicate = false;
+            document.querySelectorAll('[data-dedup]').forEach(card => {
+                if (card.dataset.dedup === dedupKey) {
+                    const staleId = card.id.replace('email-card-', '');
+                    window.allEmails = window.allEmails.filter(e => e.id !== staleId);
+                    card.remove();
+                    replacedDuplicate = true;
+                }
+            });
+
+            let categoryBadge = '';
+            if (email.initial_category === 'Scam Alert') {
+                categoryBadge = `<span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-rose-500/10 text-rose-400 border border-rose-500/20">SCAM</span>`;
+            } else if (email.initial_category === 'Spam') {
+                categoryBadge = `<span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">SPAM</span>`;
+            } else if (email.initial_category === 'High Priority') {
+                categoryBadge = `<span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-purple-500/10 text-purple-400 border border-purple-500/20">${email.initial_category}</span>`;
+            } else if (email.initial_category === 'Safe') {
+                categoryBadge = `<span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">SAFE</span>`;
+            } else {
+                categoryBadge = `<span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-slate-800/40 text-slate-400 border border-slate-700/40">${email.initial_category}</span>`;
+            }
+
+            // Extract just the display name from "Name <email@domain.com>" format
+            function senderDisplayName(raw) {
+                if (!raw || raw === 'undefined' || raw === '(unknown)') return 'Unknown Sender';
+                const match = raw.match(/^([^<]+?)\s*</);
+                if (match && match[1].trim()) return match[1].trim();
+                if (raw.includes('@')) return raw.split('@')[0];
+                return raw;
+            }
+            const cleanSender  = senderDisplayName(email.sender).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const cleanSubject = (email.subject || '(No Subject)').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const cleanSnippet = (email.body    || '').substring(0, 160).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+            const extBadge = email.from_extension ? `<span class="text-[8px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-1.5 py-0.5 rounded font-mono font-medium ml-1">EXT</span>` : '';
+
+            const safeDedup = dedupKey.replace(/"/g, '&quot;');
+            const html = `
+                <div onclick="selectEmail('${email.id}')"
+                     id="email-card-${email.id}"
+                     data-dedup="${safeDedup}"
+                     class="p-4 hover:bg-[#121826] transition duration-150 cursor-pointer relative border-b border-slate-900/40 font-sans">
+                    <div class="flex justify-between items-start mb-1.5">
+                        <span class="font-mono text-[11px] font-medium text-slate-400 truncate max-w-[200px] block">${cleanSender}</span>
+                        <span class="text-[9px] bg-slate-900/80 text-slate-500 px-1.5 py-0.5 rounded font-mono font-medium">${email.id}${extBadge}</span>
+                    </div>
+                    <h3 class="text-xs font-bold text-slate-200 truncate mb-1">${cleanSubject}</h3>
+                    <p class="text-[11px] text-slate-400 line-clamp-2 leading-relaxed font-sans opacity-80">${cleanSnippet}</p>
+                    <div class="mt-3 flex items-center justify-between">
+                        ${categoryBadge}
+                        <span class="text-[10px] font-mono font-medium text-slate-500 bg-slate-900/40 px-2 py-0.5 rounded border border-slate-900">
+                            <span class="${email.risk_score >= 70 ? 'text-rose-400 font-bold' : email.risk_score >= 40 ? 'text-amber-400' : 'text-slate-400'}">${email.risk_score}</span>/100
+                        </span>
+                    </div>
+                </div>`;
+
+            const feedList = document.querySelector('.divide-y');
+            if (!feedList) return !replacedDuplicate;
+            if (prepend) {
+                feedList.insertAdjacentHTML('afterbegin', html);
+            } else {
+                const loadMore = document.getElementById('load-more-container');
+                loadMore ? loadMore.insertAdjacentHTML('beforebegin', html) : feedList.insertAdjacentHTML('beforeend', html);
+            }
+            // true = brand-new email; false = replaced a duplicate (don't count as new audited)
+            return !replacedDuplicate;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Initialize mobile: start on inbox tab (hide analysis panel)
+            if (window.innerWidth < 1024) {
+                const analysisSection = document.getElementById('section-analysis');
+                if (analysisSection) analysisSection.style.display = 'none';
+            }
+
+            // Enforce monotonic floor: stat-total never drops below the highest
+            // value ever shown in this browser (localStorage acts as a persistent max)
+            const totalEl = document.getElementById('stat-total');
+            if (totalEl) {
+                const serverVal  = parseInt(totalEl.textContent) || 0;
+                const storedMax  = parseInt(localStorage.getItem('gm_total_audited') || '0');
+                const floored    = Math.max(serverVal, storedMax);
+                totalEl.textContent = floored;
+                localStorage.setItem('gm_total_audited', floored);
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetEmailId = urlParams.get('emailId');
+
+            fetch('/api/ext-emails')
+                .then(res => res.json())
+                .then(data => {
+                    const extEmails = data.emails || [];
+                    extEmails.forEach(email => {
+                        if (!window.allEmails.some(e => e.id === email.id)) {
+                            window.allEmails.unshift(email);
+                            renderEmailCard(email, true);
+                        }
+                    });
+                    // stat-total was already seeded correctly by the server (TOTAL_AUDITED);
+                    // just refresh spoofed + density derived stats
+                    updateRiskDensityMatrixUI();
+                })
+                .catch(() => {})
+                .finally(() => {
+                    if (targetEmailId) selectEmail(targetEmailId, false);
+                });
+        });
+    </script>
+    {% endif %}
+
+<!-- ── AI Agent Modal ──────────────────────────────────────────────────────── -->
+<div id="agent-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeAgentModal()"></div>
+
+    <!-- Panel -->
+    <div class="relative w-full max-w-lg bg-[#0b1120] border border-slate-800 rounded-2xl shadow-2xl shadow-indigo-500/10 overflow-hidden">
+
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-indigo-600/20 to-purple-600/20 border-b border-slate-800 px-6 py-4 flex items-center gap-3">
+            <div class="bg-gradient-to-tr from-indigo-600 to-purple-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid fa-robot text-white text-lg"></i>
+            </div>
+            <div>
+                <h2 class="text-base font-extrabold text-white tracking-tight">GuardMail <span class="text-indigo-400">AI Agent</span></h2>
+                <p class="text-[11px] text-slate-400 font-medium">Autonomous inbox threat auditor</p>
+            </div>
+            <button onclick="closeAgentModal()" class="ml-auto text-slate-500 hover:text-slate-300 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Question panel (shown before launch) -->
+        <div id="agent-question" class="px-6 py-6 space-y-5">
+            <div class="bg-indigo-500/5 border border-indigo-500/15 rounded-xl p-4 text-[13px] text-slate-300 leading-relaxed">
+                <i class="fa-solid fa-circle-info text-indigo-400 mr-2"></i>
+                The agent will autonomously connect to your Gmail, read each email, classify threats, detect spoofing, and add everything to the live feed — without you needing to open a single email.
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-slate-200 mb-2">
+                    How many emails do you want the agent to read?
+                </label>
+                <input id="agent-count-input"
+                       type="text"
+                       placeholder='Enter a number (e.g. 25) or type "all"'
+                       class="w-full bg-[#0e1424] border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition font-mono"
+                       onkeydown="if(event.key==='Enter') launchAgent()" />
+                <p class="text-[11px] text-slate-500 mt-1.5 font-medium">Type <span class="text-indigo-400 font-mono">all</span> to audit your entire inbox</p>
+            </div>
+
+            <button onclick="launchAgent()"
+                    class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm py-3 rounded-xl transition shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-bolt"></i>
+                Deploy Agent
+            </button>
+        </div>
+
+        <!-- Progress panel (shown while running) -->
+        <div id="agent-progress" class="hidden px-6 py-6 space-y-4">
+            <!-- Status line -->
+            <div class="flex items-center gap-3">
+                <div id="agent-status-icon" class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-circle-notch fa-spin text-indigo-400 text-sm"></i>
+                </div>
+                <div>
+                    <p id="agent-status-text" class="text-sm font-bold text-white">Connecting to Gmail…</p>
+                    <p id="agent-sub-text" class="text-[11px] text-slate-400 font-mono">Initializing agent</p>
+                </div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="bg-slate-900 rounded-full h-2 overflow-hidden">
+                <div id="agent-bar" class="h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-300" style="width:0%"></div>
+            </div>
+
+            <!-- Live stats -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 text-center">
+                    <p id="agent-stat-audited" class="text-xl font-extrabold text-white font-mono">0</p>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Audited</p>
+                </div>
+                <div class="bg-rose-500/5 border border-rose-500/20 rounded-xl p-3 text-center">
+                    <p id="agent-stat-spoofed" class="text-xl font-extrabold text-rose-400 font-mono">0</p>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Spoofed</p>
+                </div>
+                <div class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 text-center">
+                    <p id="agent-stat-soc" class="text-xl font-extrabold text-amber-400 font-mono">0</p>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">SOC Cases</p>
+                </div>
+            </div>
+
+            <!-- Live log -->
+            <div class="bg-black/40 border border-slate-900 rounded-xl p-3 h-32 overflow-y-auto font-mono text-[11px] space-y-1" id="agent-log"></div>
+
+            <!-- Done button (hidden until complete) -->
+            <button id="agent-done-btn" onclick="closeAgentModal()" class="hidden w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm py-3 rounded-xl transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-check"></i>
+                Done — View Results
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openAgentModal() {
+    document.getElementById('agent-modal').classList.remove('hidden');
+    document.getElementById('agent-question').classList.remove('hidden');
+    document.getElementById('agent-progress').classList.add('hidden');
+    document.getElementById('agent-count-input').value = '';
+    document.getElementById('agent-count-input').focus();
+}
+
+function closeAgentModal() {
+    document.getElementById('agent-modal').classList.add('hidden');
+}
+
+function launchAgent() {
+    const raw = document.getElementById('agent-count-input').value.trim().toLowerCase();
+    if (!raw) { document.getElementById('agent-count-input').focus(); return; }
+
+    const count = (raw === 'all' || /^\d+$/.test(raw)) ? raw : '10';
+
+    // Switch to progress panel
+    document.getElementById('agent-question').classList.add('hidden');
+    document.getElementById('agent-progress').classList.remove('hidden');
+    document.getElementById('agent-done-btn').classList.add('hidden');
+
+    const logEl     = document.getElementById('agent-log');
+    const barEl     = document.getElementById('agent-bar');
+    const auditedEl = document.getElementById('agent-stat-audited');
+    const spoofedEl = document.getElementById('agent-stat-spoofed');
+    const socEl     = document.getElementById('agent-stat-soc');
+
+    logEl.innerHTML = '';
+
+    function log(msg, cls='text-slate-400') {
+        const line = document.createElement('p');
+        line.className = cls;
+        line.textContent = msg;
+        logEl.appendChild(line);
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    log('› Connecting to Gmail API…', 'text-indigo-400');
+
+    const es = new EventSource(`/api/agent-run?count=${encodeURIComponent(count)}`);
+
+    es.onmessage = function(e) {
+        const d = JSON.parse(e.data);
+
+        if (d.error) {
+            log(`✗ Error: ${d.error}`, 'text-rose-400');
+            document.getElementById('agent-status-text').textContent = 'Agent encountered an error';
+            document.getElementById('agent-status-icon').innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-400 text-sm"></i>';
+            es.close();
+            document.getElementById('agent-done-btn').classList.remove('hidden');
+            return;
+        }
+
+        if (d.status === 'started') {
+            document.getElementById('agent-status-text').textContent = `Auditing ${d.total} email${d.total !== 1 ? 's' : ''}…`;
+            log(`› Agent online — ${d.total} emails queued`, 'text-indigo-400');
+        }
+
+        if (d.status === 'progress' || d.status === 'skip') {
+            const pct = d.total > 0 ? Math.round((d.processed / d.total) * 100) : 0;
+            barEl.style.width = pct + '%';
+            document.getElementById('agent-sub-text').textContent = `${d.processed} / ${d.total} processed (${pct}%)`;
+            auditedEl.textContent = d.processed;
+            if (d.spoofed !== undefined) spoofedEl.textContent = d.spoofed;
+            if (d.soc     !== undefined) socEl.textContent     = d.soc;
+
+            if (d.status === 'progress' && d.email) {
+                const em = d.email;
+                const catColor = em.initial_category === 'Scam Alert' ? 'text-rose-400'
+                               : em.initial_category === 'Spam'       ? 'text-amber-400'
+                               : em.initial_category === 'Safe'       ? 'text-emerald-400'
+                               : 'text-slate-300';
+                log(`✓ [${em.initial_category}] ${em.subject.slice(0, 50) || '(no subject)'}`, catColor);
+
+                // Inject into live feed
+                if (typeof renderEmailCard === 'function') {
+                    if (!window.allEmails.some(x => x.id === em.id)) {
+                        window.allEmails.unshift(em);
+                        renderEmailCard(em, true);
+                    }
+                }
+                // Only count genuinely new emails (server tells us via is_new)
+                if (d.is_new) bumpAudited(1);
+                // Evict oldest card if server hit the 250 cap
+                if (d.evicted_id) evictCard(d.evicted_id);
+                updateRiskDensityMatrixUI();
+            }
+        }
+
+        if (d.status === 'done') {
+            barEl.style.width = '100%';
+            document.getElementById('agent-status-text').textContent = 'Agent complete';
+            document.getElementById('agent-sub-text').textContent    = `${d.processed} emails audited`;
+            document.getElementById('agent-status-icon').innerHTML   = '<i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>';
+            log(`✓ Done — ${d.processed} audited, ${d.spoofed} spoofed, ${d.soc} SOC cases`, 'text-emerald-400');
+            document.getElementById('agent-done-btn').classList.remove('hidden');
+            es.close();
+
+            if (typeof updateRiskDensityMatrixUI === 'function') updateRiskDensityMatrixUI();
+        }
+    };
+
+    es.onerror = function() {
+        log('✗ Connection to agent lost', 'text-rose-400');
+        es.close();
+        document.getElementById('agent-done-btn').classList.remove('hidden');
+    };
+}
+</script>
+</body>
+</html>
