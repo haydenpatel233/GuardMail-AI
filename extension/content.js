@@ -148,6 +148,34 @@ function getInboxRows() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Helper: get the currently logged-in user's email address from the page DOM
+// ─────────────────────────────────────────────────────────────────────────────
+function getLoggedInEmail() {
+    if (HOST.includes('mail.google.com')) {
+        // Gmail header account button has aria-label "Google Account: Name (email@gmail.com)"
+        const btn = document.querySelector('a[aria-label*="Google Account"]')
+                 || document.querySelector('[aria-label*="Google Account"]');
+        if (btn) {
+            const m = btn.getAttribute('aria-label')?.match(/\(([^)]+@[^)]+)\)/);
+            if (m) return m[1].toLowerCase();
+        }
+        // Fallback: data-email attribute on profile element
+        const el = document.querySelector('[data-email]');
+        if (el) return el.getAttribute('data-email').toLowerCase();
+    }
+    if (HOST.includes('mail.yahoo.com')) {
+        // Yahoo puts the account email in aria-label or text of the profile nav item
+        const candidates = document.querySelectorAll('[aria-label*="@"], [title*="@"]');
+        for (const el of candidates) {
+            const text = el.getAttribute('aria-label') || el.getAttribute('title') || '';
+            const m = text.match(/[\w.+%-]+@[\w.-]+\.[a-z]{2,}/i);
+            if (m) return m[0].toLowerCase();
+        }
+    }
+    return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Helper: extract sender / subject / snippet from an inbox row
 // Dispatches by platform so Gmail and Yahoo DOM differences are handled.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -681,6 +709,7 @@ async function startAgent(input, panel) {
     log(`› Agent online — ${pm.name} · ${rows.length} emails queued`, pm.badgeText);
 
     let audited = 0, spoofed = 0, soc = 0;
+    const loggedInEmail = getLoggedInEmail();
 
     for (let i = 0; i < rows.length; i++) {
         const { sender, subject, body } = extractRowData(rows[i], i);
@@ -693,6 +722,22 @@ async function startAgent(input, panel) {
             subEl.textContent = `${audited} / ${rows.length}  (${pct}%)`;
             log(`↷ Skipped (seen before): ${sender.slice(0, 36)}`, '#334155');
             continue;
+        }
+
+        // Emails sent by the logged-in account are automatically Safe
+        if (loggedInEmail) {
+            const senderEmail = (sender.match(/<([^>]+)>/) || [null, sender])[1].toLowerCase().trim();
+            if (senderEmail === loggedInEmail) {
+                audited++;
+                seenSet.add(memKey);
+                const pct = Math.round((audited / rows.length) * 100);
+                barEl.style.width     = pct + '%';
+                auditedEl.textContent = audited;
+                subEl.textContent     = `${audited} / ${rows.length}  (${pct}%)`;
+                const label = subject && subject !== '(no subject)' ? subject.slice(0, 40) : sender.replace(/<[^>]+>/, '').trim().slice(0, 40);
+                log(`✓ [Safe] ${label} — sent by you`, '#34d399');
+                continue;
+            }
         }
 
         try {
