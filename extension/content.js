@@ -6,7 +6,8 @@ if (!document.querySelector('link[href*="font-awesome"]')) {
     document.head.appendChild(fa);
 }
 
-const API = 'http://127.0.0.1:4245';
+const API       = 'http://127.0.0.1:4245';          // local server — scanning & analysis
+const DASHBOARD = 'https://guard-mail-ai.vercel.app'; // web dashboard — always Vercel
 const HOST = window.location.hostname;
 
 // Inject a comprehensive scoped reset so Gmail and Yahoo page styles
@@ -354,7 +355,7 @@ scanButton.addEventListener('click', function () {
                         ${icon}
                         <span style="font-size:13px;line-height:1.5;">${copy}</span>
                     </div>
-                    <a href="${API}/?emailId=${data.id}" target="_blank"
+                    <a href="${DASHBOARD}" target="_blank"
                        style="background:#4f46e5;color:#fff;font-weight:800;font-size:11px;padding:8px 14px;
                               border-radius:10px;text-decoration:none;text-transform:uppercase;
                               letter-spacing:0.5px;white-space:nowrap;flex-shrink:0;">

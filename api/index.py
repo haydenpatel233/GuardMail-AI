@@ -39,11 +39,11 @@ CLIENT_CONFIG = {
         "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
         "token_uri": "https://oauth2.googleapis.com/token",
-        "redirect_uris": [
-            os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:4245/callback"),
+        "redirect_uris": list(dict.fromkeys(filter(None, [
+            os.getenv("GOOGLE_REDIRECT_URI"),
             "http://localhost:4245/callback",
             "http://127.0.0.1:4245/callback",
-        ]
+        ])))
     }
 }
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']

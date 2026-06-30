@@ -31,3 +31,5 @@ data/ext_emails.json
 # Screenshots
 *.png
 
+.vercel
+.env*
