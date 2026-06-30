@@ -25,6 +25,9 @@ datasets/phishing_email.csv
 datasets/spam_Emails_data.csv
 datasets/malicious_phish.csv
 
+# Local scan data — personal email data, not for deployment
+data/ext_emails.json
+
 # Screenshots
 *.png
 
