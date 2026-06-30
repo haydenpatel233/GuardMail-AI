@@ -1,0 +1,11 @@
+.venv
+venv
+env
+ENV
+__pycache__
+*.pyc
+datasets/
+data/ext_emails.json
+*.png
+.env
+.env.local

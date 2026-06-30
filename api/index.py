@@ -4,6 +4,9 @@ import re
 import csv
 import math
 import time
+import hmac
+import hashlib
+import secrets
 import google_auth_oauthlib.flow
 from flask import Flask, render_template, request, jsonify, redirect, session, Response, stream_with_context
 from flask_cors import CORS
@@ -12,13 +15,17 @@ from dotenv import load_dotenv
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
-# Tell oauthlib it is acceptable to transmit tokens over plain HTTP for local debugging
+# Allow HTTP for local dev; Vercel uses HTTPS so this is harmless there
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 load_dotenv()
 
 app = Flask(__name__, template_folder='../templates')
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "quantum-crew-super-secure-token-2026")
+
+# Proper cookie settings for HTTPS (Vercel) while keeping local HTTP working
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 CORS(app, supports_credentials=True)
 
@@ -1088,6 +1095,22 @@ def _build_redirect_uri() -> str:
         return env_uri
     return request.url_root.rstrip('/') + '/callback'
 
+def _make_state() -> str:
+    """Create a stateless CSRF state token signed with the app secret key.
+    Works on serverless (Vercel) where session cookies may not survive the OAuth round-trip."""
+    nonce = secrets.token_urlsafe(16)
+    sig = hmac.new(app.secret_key.encode(), nonce.encode(), hashlib.sha256).hexdigest()[:24]
+    return f"{nonce}.{sig}"
+
+def _verify_state(token: str) -> bool:
+    """Verify an HMAC-signed state token without needing session storage."""
+    try:
+        nonce, sig = token.rsplit('.', 1)
+        expected = hmac.new(app.secret_key.encode(), nonce.encode(), hashlib.sha256).hexdigest()[:24]
+        return hmac.compare_digest(sig, expected)
+    except Exception:
+        return False
+
 @app.route('/login')
 def login():
     """Initializes Google OAuth pipeline variables and options."""
@@ -1096,23 +1119,28 @@ def login():
         scopes=SCOPES
     )
     flow.redirect_uri = _build_redirect_uri()
-    authorization_url, state = flow.authorization_url(
+    state = _make_state()
+    authorization_url, _ = flow.authorization_url(
         access_type='offline',
-        include_granted_scopes='true'
+        include_granted_scopes='true',
+        state=state,
     )
-    session['state'] = state
+    session['state'] = state  # best-effort; may not survive serverless
     return redirect(authorization_url)
 
 
 @app.route('/callback')
 def callback():
-    """Transforms verification properties into runtime auth tokens securely while mitigating state-mismatch panics."""
-    state = session.get('state')
-    incoming_state = request.args.get('state')
-    
-    # Checkpoint A: If the app restarted or session cookies dropped mid-flight, reset and bounce back to login
-    if not state or state != incoming_state:
-        print(f"[DEBUG] State mismatch — session state: {repr(state)}, incoming: {repr(incoming_state)}")
+    """Transforms verification properties into runtime auth tokens securely."""
+    incoming_state = request.args.get('state', '')
+    session_state  = session.get('state')
+
+    # Accept if session state matches OR if the HMAC signature on the incoming state is valid
+    # (the HMAC check handles Vercel serverless where the session cookie is lost mid-flight)
+    state_ok = (session_state and session_state == incoming_state) or _verify_state(incoming_state)
+
+    if not state_ok:
+        print(f"[DEBUG] State invalid — session: {repr(session_state)}, incoming: {repr(incoming_state)}")
         session.clear()
         return redirect('/login')
         
