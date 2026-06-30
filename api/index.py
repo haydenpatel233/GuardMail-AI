@@ -1147,7 +1147,7 @@ def callback():
     flow = google_auth_oauthlib.flow.Flow.from_client_config(
         CLIENT_CONFIG,
         scopes=SCOPES,
-        state=state
+        state=incoming_state
     )
     flow.redirect_uri = _build_redirect_uri()
 
