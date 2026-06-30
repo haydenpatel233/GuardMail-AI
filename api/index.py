@@ -1083,7 +1083,8 @@ def index():
     # TOTAL_AUDITED already counts every Gmail + extension + agent email ever seen
     all_analyzed = list(EXT_EMAILS.values()) + [e for e in emails if e['id'] not in EXT_EMAILS]
     analytics = calculate_analytics(all_analyzed)
-    analytics['total'] = TOTAL_AUDITED   # monotonic — never goes down
+    # On Vercel (serverless) TOTAL_AUDITED resets each cold-start; floor it to actual email count
+    analytics['total'] = max(TOTAL_AUDITED, len(all_analyzed))
 
     return render_template('index.html', logged_in=True, emails=emails, next_token=next_token, analytics=analytics)
 
