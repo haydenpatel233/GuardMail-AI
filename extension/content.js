@@ -595,7 +595,7 @@ function buildAgentPanel() {
                      style="background:#04080f;border:1px solid #0f172a;border-radius:14px;padding:30px 12px 10px;height:130px;overflow-y:auto;font-family:'Courier New',monospace;font-size:11px;line-height:1.7;"></div>
             </div>
 
-            <a id="gm-done-btn" href="${API}" target="_blank"
+            <a id="gm-done-btn" href="${DASHBOARD}" target="_blank"
                style="display:none;margin-top:14px;box-sizing:border-box;width:100%;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-weight:800;font-size:13px;padding:13px;border-radius:14px;text-align:center;text-decoration:none;letter-spacing:.4px;box-shadow:0 6px 20px rgba(5,150,105,.35);">
                 <i class="fas fa-circle-check"></i> Done — Open Dashboard
             </a>
