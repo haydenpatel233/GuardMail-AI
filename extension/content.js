@@ -803,7 +803,10 @@ async function startAgent(input, panel) {
     // Persist updated scan memory to localStorage
     localStorage.setItem(MEMORY_KEY, JSON.stringify([...seenSet].slice(-500)));
 
-    // Done
+    // Done — update the dashboard link with platform + audited count so Vercel can display them
+    const _platform = HOST.includes('mail.yahoo.com') ? 'yahoo' : 'gmail';
+    doneBtn.href = `${DASHBOARD}?platform=${_platform}&audited=${audited}`;
+
     iconEl.innerHTML      = '<i class="fa-solid fa-circle-check" style="color:#34d399;font-size:14px;"></i>';
     statusEl.textContent  = 'Agent complete';
     subEl.textContent     = `${audited} emails audited`;

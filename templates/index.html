@@ -416,18 +416,47 @@
         if (gmailBadge && window.gmailLoggedIn) gmailBadge.style.display = 'flex';
 
         function refreshPlatformBadges() {
+            const yahooTs      = parseInt(localStorage.getItem('gm_yahoo_ts') || '0');
+            const yahooRecent  = (Date.now() - yahooTs) < 86400000;
             fetch('/api/platform-status')
                 .then(r => r.json())
                 .then(d => {
                     // Gmail: show if OAuth logged in OR extension active on Gmail
                     if (gmailBadge) gmailBadge.style.display = (window.gmailLoggedIn || d.gmail) ? 'flex' : 'none';
-                    if (yahooBadge) yahooBadge.style.display = d.yahoo ? 'flex' : 'none';
+                    // Yahoo: show if extension was active on Yahoo OR recently connected (localStorage)
+                    if (yahooBadge) yahooBadge.style.display = (d.yahoo || yahooRecent) ? 'flex' : 'none';
                 })
                 .catch(() => {
-                    // On fetch failure, still show Gmail badge if logged in
                     if (gmailBadge && window.gmailLoggedIn) gmailBadge.style.display = 'flex';
+                    if (yahooBadge && yahooRecent) yahooBadge.style.display = 'flex';
                 });
         }
+        // ── Extension handoff: ?platform=yahoo|gmail&audited=N set by extension done button ──
+        (function () {
+            const p        = new URLSearchParams(window.location.search);
+            const plat     = p.get('platform');
+            const extCount = parseInt(p.get('audited') || '0');
+
+            if (plat === 'yahoo') {
+                localStorage.setItem('gm_yahoo_ts', Date.now());
+                if (yahooBadge) yahooBadge.style.display = 'flex';
+            }
+            if (plat === 'gmail' && gmailBadge) gmailBadge.style.display = 'flex';
+
+            // Floor audited count with extension scan total
+            if (extCount > 0) {
+                const stored = parseInt(localStorage.getItem('gm_total_audited') || '0');
+                const next   = Math.max(extCount, stored);
+                localStorage.setItem('gm_total_audited', next);
+                const el = document.getElementById('stat-total');
+                if (el && next > parseInt(el.textContent || '0')) el.textContent = next;
+            }
+
+            // Persist Yahoo badge for 24 h across page loads
+            const yahooTs = parseInt(localStorage.getItem('gm_yahoo_ts') || '0');
+            if (yahooBadge && (Date.now() - yahooTs) < 86400000) yahooBadge.style.display = 'flex';
+        })();
+
         refreshPlatformBadges();
         setInterval(refreshPlatformBadges, 10000);
 
