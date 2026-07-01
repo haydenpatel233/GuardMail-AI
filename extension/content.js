@@ -383,7 +383,7 @@ scanButton.addEventListener('click', function () {
                         ${icon}
                         <span style="font-size:13px;line-height:1.5;">${copy}</span>
                     </div>
-                    <a href="${DASHBOARD}" target="_blank"
+                    <a href="${DASHBOARD}?platform=${HOST.includes('mail.yahoo.com') ? 'yahoo' : 'gmail'}" target="_blank"
                        style="background:#4f46e5;color:#fff;font-weight:800;font-size:11px;padding:8px 14px;
                               border-radius:10px;text-decoration:none;text-transform:uppercase;
                               letter-spacing:0.5px;white-space:nowrap;flex-shrink:0;">
@@ -603,11 +603,11 @@ function buildAgentPanel() {
                 </div>
                 <div style="background:rgba(244,63,94,.06);border:1px solid rgba(244,63,94,.2);border-radius:14px;padding:12px 8px;text-align:center;">
                     <div id="gm-stat-spoofed" style="font-size:22px;font-weight:900;color:#fb7185;font-family:monospace;line-height:1;">0</div>
-                    <div style="font-size:9px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin-top:4px;">Spoofed</div>
+                    <div style="font-size:9px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin-top:4px;">Scam Alert</div>
                 </div>
                 <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:12px 8px;text-align:center;">
                     <div id="gm-stat-soc" style="font-size:22px;font-weight:900;color:#fbbf24;font-family:monospace;line-height:1;">0</div>
-                    <div style="font-size:9px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin-top:4px;">SOC Cases</div>
+                    <div style="font-size:9px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin-top:4px;">Spam</div>
                 </div>
             </div>
 
@@ -708,7 +708,7 @@ async function startAgent(input, panel) {
     statusEl.textContent = `Auditing ${rows.length} email${rows.length !== 1 ? 's' : ''} from ${pm.name}…`;
     log(`› Agent online — ${pm.name} · ${rows.length} emails queued`, pm.badgeText);
 
-    let audited = 0, spoofed = 0, soc = 0;
+    let audited = 0, scamCount = 0, spamCount = 0;
     const loggedInEmail = getLoggedInEmail();
 
     for (let i = 0; i < rows.length; i++) {
@@ -760,8 +760,8 @@ async function startAgent(input, panel) {
             seenSet.add(memKey);
 
             audited++;
-            if (data.spoofing_detected) spoofed++;
-            if (data.risk_score >= 75 || data.spoofing_detected) soc++;
+            if (data.assigned_category === 'Scam Alert') scamCount++;
+            if (data.assigned_category === 'Spam') spamCount++;
             if (data.evicted_id) log(`⟳ Oldest email evicted (cap: 250)`, '#475569');
 
             // Threshold filter: count toward audited but don't push to dashboard if below threshold
@@ -781,8 +781,8 @@ async function startAgent(input, panel) {
 
             barEl.style.width      = pct + '%';
             auditedEl.textContent  = audited;
-            spoofedEl.textContent  = spoofed;
-            socEl.textContent      = soc;
+            spoofedEl.textContent  = scamCount;
+            socEl.textContent      = spamCount;
             subEl.textContent      = `${audited} / ${rows.length}  (${pct}%)`;
             log(`✓ [${cat}${conf}] ${label}${thresholdNote}`, belowThreshold ? '#334155' : color);
 
@@ -811,6 +811,6 @@ async function startAgent(input, panel) {
     statusEl.textContent  = 'Agent complete';
     subEl.textContent     = `${audited} emails audited`;
     barEl.style.width     = '100%';
-    log(`✓ Done — ${audited} audited · ${spoofed} spoofed · ${soc} SOC cases`, '#34d399');
+    log(`✓ Done — ${audited} audited · ${scamCount} scam alerts · ${spamCount} spam`, '#34d399');
     doneBtn.style.display = 'block';
 }

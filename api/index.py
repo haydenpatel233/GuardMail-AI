@@ -961,7 +961,7 @@ def agent_run():
             total = len(all_messages)
             yield f"data: {json.dumps({'status': 'started', 'total': total})}\n\n"
 
-            processed = spoofed_count = soc_count = 0
+            processed = scam_count = spam_count = 0
 
             for msg in all_messages:
                 try:
@@ -983,10 +983,10 @@ def agent_run():
                     email_id = hashlib.md5((sender + subject + body[:64]).encode()).hexdigest()[:12]
                     is_soc = risk >= 75 or spoofed
 
-                    if spoofed:
-                        spoofed_count += 1
-                    if is_soc:
-                        soc_count += 1
+                    if category == 'Scam Alert':
+                        scam_count += 1
+                    if category == 'Spam':
+                        spam_count += 1
                         REPORTED_SOC_IDS.add(email_id)
 
                     email_data = {
@@ -1003,7 +1003,7 @@ def agent_run():
                         TOTAL_AUDITED += 1
                     processed += 1
 
-                    yield f"data: {json.dumps({'status': 'progress', 'email': email_data, 'processed': processed, 'total': total, 'spoofed': spoofed_count, 'soc': soc_count, 'is_new': is_new_email, 'total_audited': TOTAL_AUDITED})}\n\n"
+                    yield f"data: {json.dumps({'status': 'progress', 'email': email_data, 'processed': processed, 'total': total, 'scam': scam_count, 'spam': spam_count, 'is_new': is_new_email, 'total_audited': TOTAL_AUDITED})}\n\n"
 
                 except Exception as e:
                     print(f"[AGENT] skip {msg['id']}: {e}")
@@ -1011,7 +1011,7 @@ def agent_run():
                     yield f"data: {json.dumps({'status': 'skip', 'processed': processed, 'total': total})}\n\n"
 
             _save_persisted()
-            yield f"data: {json.dumps({'status': 'done', 'processed': processed, 'spoofed': spoofed_count, 'soc': soc_count})}\n\n"
+            yield f"data: {json.dumps({'status': 'done', 'processed': processed, 'scam': scam_count, 'spam': spam_count})}\n\n"
 
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n"

@@ -179,17 +179,17 @@
                 </div>
             </div>
             <div class="premium-panel p-4 rounded-2xl flex flex-col justify-between transition hover:border-rose-900/50">
-                <p class="text-[10px] uppercase tracking-wider text-rose-400 font-bold">Spoofed</p>
+                <p class="text-[10px] uppercase tracking-wider text-rose-400 font-bold">Scam Alert</p>
                 <div class="flex items-baseline justify-between mt-2">
-                    <p id="stat-spoofed" class="text-3xl font-extrabold text-rose-400 font-mono">{{ analytics.spoofed }}</p>
-                    <span class="text-rose-500/40 text-xs"><i class="fa-solid fa-mask"></i></span>
+                    <p id="stat-scam" class="text-3xl font-extrabold text-rose-400 font-mono">{{ analytics.scams }}</p>
+                    <span class="text-rose-500/40 text-xs"><i class="fa-solid fa-triangle-exclamation"></i></span>
                 </div>
             </div>
             <div class="premium-panel p-4 rounded-2xl flex flex-col justify-between transition hover:border-amber-900/50">
-                <p class="text-[10px] uppercase tracking-wider text-amber-400 font-bold">SOC Cases</p>
+                <p class="text-[10px] uppercase tracking-wider text-amber-400 font-bold">Spam</p>
                 <div class="flex items-baseline justify-between mt-2">
-                    <p class="text-3xl font-extrabold text-amber-400 font-mono">{{ analytics.soc_cases }}</p>
-                    <span class="text-amber-500/40 text-xs"><i class="fa-solid fa-box-archive"></i></span>
+                    <p id="stat-spam" class="text-3xl font-extrabold text-amber-400 font-mono">{{ analytics.spams }}</p>
+                    <span class="text-amber-500/40 text-xs"><i class="fa-solid fa-envelope-circle-check"></i></span>
                 </div>
             </div>
             <div class="premium-panel p-4 rounded-2xl flex flex-col justify-between border-rose-950/40 bg-gradient-to-br from-[#0f1526] to-[#1f131a]">
@@ -381,14 +381,16 @@
         }
 
         function updateRiskDensityMatrixUI() {
-            // stat-total is managed separately (monotonic, never recomputed from array)
             const total          = window.allEmails.length;
-            const spoofedCount   = window.allEmails.filter(e => e.spoofing_detected).length;
-            const maliciousCount = window.allEmails.filter(e => e.initial_category === 'Scam Alert' || e.initial_category === 'Spam').length;
+            const scamCount      = window.allEmails.filter(e => e.initial_category === 'Scam Alert').length;
+            const spamCount      = window.allEmails.filter(e => e.initial_category === 'Spam').length;
+            const maliciousCount = scamCount + spamCount;
             const computedDensity = total > 0 ? Math.round((maliciousCount / total) * 100) : 0;
-            const spoofedEl = document.getElementById('stat-spoofed');
+            const scamEl    = document.getElementById('stat-scam');
+            const spamEl    = document.getElementById('stat-spam');
             const densityEl = document.getElementById('stat-density');
-            if (spoofedEl) spoofedEl.textContent = spoofedCount;
+            if (scamEl)    scamEl.textContent    = scamCount;
+            if (spamEl)    spamEl.textContent    = spamCount;
             if (densityEl) densityEl.textContent = computedDensity + '%';
         }
 
@@ -416,32 +418,35 @@
         if (gmailBadge && window.gmailLoggedIn) gmailBadge.style.display = 'flex';
 
         function refreshPlatformBadges() {
-            const yahooTs      = parseInt(localStorage.getItem('gm_yahoo_ts') || '0');
-            const yahooRecent  = (Date.now() - yahooTs) < 86400000;
+            const now         = Date.now();
+            const yahooRecent = (now - parseInt(localStorage.getItem('gm_yahoo_ts') || '0')) < 86400000;
+            const gmailRecent = (now - parseInt(localStorage.getItem('gm_gmail_ts') || '0')) < 86400000;
             fetch('/api/platform-status')
                 .then(r => r.json())
                 .then(d => {
-                    // Gmail: show if OAuth logged in OR extension active on Gmail
-                    if (gmailBadge) gmailBadge.style.display = (window.gmailLoggedIn || d.gmail) ? 'flex' : 'none';
-                    // Yahoo: show if extension was active on Yahoo OR recently connected (localStorage)
+                    if (gmailBadge) gmailBadge.style.display = (window.gmailLoggedIn || d.gmail || gmailRecent) ? 'flex' : 'none';
                     if (yahooBadge) yahooBadge.style.display = (d.yahoo || yahooRecent) ? 'flex' : 'none';
                 })
                 .catch(() => {
-                    if (gmailBadge && window.gmailLoggedIn) gmailBadge.style.display = 'flex';
+                    if (gmailBadge && (window.gmailLoggedIn || gmailRecent)) gmailBadge.style.display = 'flex';
                     if (yahooBadge && yahooRecent) yahooBadge.style.display = 'flex';
                 });
         }
-        // ── Extension handoff: ?platform=yahoo|gmail&audited=N set by extension done button ──
+        // ── Extension handoff: ?platform=yahoo|gmail&audited=N set by extension buttons ──
         (function () {
             const p        = new URLSearchParams(window.location.search);
             const plat     = p.get('platform');
             const extCount = parseInt(p.get('audited') || '0');
+            const now      = Date.now();
 
             if (plat === 'yahoo') {
-                localStorage.setItem('gm_yahoo_ts', Date.now());
+                localStorage.setItem('gm_yahoo_ts', now);
                 if (yahooBadge) yahooBadge.style.display = 'flex';
             }
-            if (plat === 'gmail' && gmailBadge) gmailBadge.style.display = 'flex';
+            if (plat === 'gmail') {
+                localStorage.setItem('gm_gmail_ts', now);
+                if (gmailBadge) gmailBadge.style.display = 'flex';
+            }
 
             // Floor audited count with extension scan total
             if (extCount > 0) {
@@ -452,9 +457,11 @@
                 if (el && next > parseInt(el.textContent || '0')) el.textContent = next;
             }
 
-            // Persist Yahoo badge for 24 h across page loads
+            // Persist badges for 24 h across page loads (even without URL params)
             const yahooTs = parseInt(localStorage.getItem('gm_yahoo_ts') || '0');
-            if (yahooBadge && (Date.now() - yahooTs) < 86400000) yahooBadge.style.display = 'flex';
+            const gmailTs = parseInt(localStorage.getItem('gm_gmail_ts') || '0');
+            if (yahooBadge && (now - yahooTs) < 86400000) yahooBadge.style.display = 'flex';
+            if (gmailBadge && (now - gmailTs) < 86400000) gmailBadge.style.display = 'flex';
         })();
 
         refreshPlatformBadges();
@@ -1024,12 +1031,12 @@
                     <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Audited</p>
                 </div>
                 <div class="bg-rose-500/5 border border-rose-500/20 rounded-xl p-3 text-center">
-                    <p id="agent-stat-spoofed" class="text-xl font-extrabold text-rose-400 font-mono">0</p>
-                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Spoofed</p>
+                    <p id="agent-stat-scam" class="text-xl font-extrabold text-rose-400 font-mono">0</p>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Scam Alert</p>
                 </div>
                 <div class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 text-center">
-                    <p id="agent-stat-soc" class="text-xl font-extrabold text-amber-400 font-mono">0</p>
-                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">SOC Cases</p>
+                    <p id="agent-stat-spam" class="text-xl font-extrabold text-amber-400 font-mono">0</p>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Spam</p>
                 </div>
             </div>
 
@@ -1072,8 +1079,8 @@ function launchAgent() {
     const logEl     = document.getElementById('agent-log');
     const barEl     = document.getElementById('agent-bar');
     const auditedEl = document.getElementById('agent-stat-audited');
-    const spoofedEl = document.getElementById('agent-stat-spoofed');
-    const socEl     = document.getElementById('agent-stat-soc');
+    const scamEl = document.getElementById('agent-stat-scam');
+    const spamEl = document.getElementById('agent-stat-spam');
 
     logEl.innerHTML = '';
 
@@ -1111,8 +1118,8 @@ function launchAgent() {
             barEl.style.width = pct + '%';
             document.getElementById('agent-sub-text').textContent = `${d.processed} / ${d.total} processed (${pct}%)`;
             auditedEl.textContent = d.processed;
-            if (d.spoofed !== undefined) spoofedEl.textContent = d.spoofed;
-            if (d.soc     !== undefined) socEl.textContent     = d.soc;
+            if (d.scam !== undefined) scamEl.textContent = d.scam;
+            if (d.spam !== undefined) spamEl.textContent = d.spam;
 
             if (d.status === 'progress' && d.email) {
                 const em = d.email;
@@ -1142,7 +1149,7 @@ function launchAgent() {
             document.getElementById('agent-status-text').textContent = 'Agent complete';
             document.getElementById('agent-sub-text').textContent    = `${d.processed} emails audited`;
             document.getElementById('agent-status-icon').innerHTML   = '<i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>';
-            log(`✓ Done — ${d.processed} audited, ${d.spoofed} spoofed, ${d.soc} SOC cases`, 'text-emerald-400');
+            log(`✓ Done — ${d.processed} audited, ${d.scam} scam alerts, ${d.spam} spam`, 'text-emerald-400');
             document.getElementById('agent-done-btn').classList.remove('hidden');
             es.close();
 
